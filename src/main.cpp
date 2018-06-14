@@ -1,3 +1,26 @@
+// #include <iostream>
+// using namespace std;
+
+// class Map{
+// public:
+//   static Map &getInstance()
+//   {
+//     static Map instance;
+//     return instance;
+//   }
+//   void do_something() { cout << "ABC" << endl;}
+// private:
+//   Map() = default;
+//   Map(const Map &) = delete;
+//   Map & operator=(const Map &) = delete;
+// };
+
+// int main() {
+//   Map::getInstance().do_something();
+// }
+
+
+#if 1
 #include <math.h>
 #include <uWS/uWS.h>
 #include <chrono>
@@ -55,10 +78,10 @@ int main() {
     iss >> s;
     iss >> d_x;
     iss >> d_y;
-    Map::getInstance()->addWaypoint(x, y, s, d_x, d_y);
+    Map::getInstance().addWaypoint(x, y, s, d_x, d_y);
   }
 
-  PathPlanning planner;
+  PathPlanning *planner = new PathPlanning();
 
   h.onMessage([&planner](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                       uWS::OpCode opCode) {
@@ -77,10 +100,10 @@ int main() {
         if (event == "telemetry") {
 					json msgJson;
 
-          planner.Solver(j[1]);
+          // planner->Solver(j[1]);
 
-          msgJson["next_x"] = planner.get_next_x_vals();
-          msgJson["next_y"] = planner.get_next_y_vals();
+          // msgJson["next_x"] = planner->get_next_x_vals();
+          // msgJson["next_y"] = planner->get_next_y_vals();
 
           auto msg = "42[\"control\"," + msgJson.dump() + "]";
 
@@ -128,3 +151,4 @@ int main() {
   }
   h.run();
 }
+#endif

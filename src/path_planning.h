@@ -4,22 +4,18 @@
 #include <vector>
 #include "json.hpp"
 #include "behavior_planner.h"
+#include "sensor_fusion.h"
+#include "simulator.h"
+#include "prediction.h"
+#include "trajectory.h"
 
 using nlohmann::json;
 using std::map;
 using std::vector;
 
-class Vehicle;
-struct EgoVehicle;
-struct NonEgoVehicle;
-class SensorFusion;
-class Simulator;
-class Prediction;
-class BehaviorPlanner;
-class Trajectory;
-
 class PathPlanning {
  public:
+  PathPlanning() {}
   void Solver(json &sensor_data);
   void UpdateVehicles();
   void update_ego(EgoVehicle &ego);

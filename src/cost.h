@@ -3,12 +3,13 @@
 #include <map>
 #include <vector>
 #include <string>
+#include "behavior_fsm.h"
+#include "vehicle.h"
+
 using std::vector;
 using std::map;
 using std::string;
 
-class BehaviorFSM;
-class Vehicle;
 
 double calculate_cost(const BehaviorFSM & vehicle, const map<int, vector<Vehicle>> & predictions, const vector<Vehicle> & trajectory);
 

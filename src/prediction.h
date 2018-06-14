@@ -1,9 +1,10 @@
 #ifndef PREDICTION_H_
 #define PREDICTION_H_
 #include <vector>
+#include "vehicle.h"
+#include "lane_map.h"
 using std::vector;
-class Vehicle;
-class Map;
+
 class Prediction {
 public:
   vector<Vehicle> GenerateOneVehiclePredictions(Vehicle &vehicle, int horizon);

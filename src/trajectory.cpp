@@ -57,7 +57,7 @@ void Trajectory::CoordinateCar2Map(double &x_point, double &y_point)
     y_point += ref_y;
 }
 
-tk::spline & Trajectory::Fit()
+void Trajectory::Fit()
 {
     vector<double> ptsx;
     vector<double> ptsy;
@@ -107,7 +107,6 @@ tk::spline & Trajectory::Fit()
     }
 
     s.set_points(ptsx, ptsy);
-    return s;
 }
 
 void Trajectory::GenerateTrajectory(vector<double> &next_x_vals, vector<double> &next_y_vals)

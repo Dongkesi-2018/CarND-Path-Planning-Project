@@ -3,14 +3,12 @@
 
 #include <vector>
 #include "spline.h"
+#include "simulator.h"
+#include "sensor_fusion.h"
+#include "lane_map.h"
 
 using std::vector;
-
-class Simulator;
-class SensorFusion;
-class Map;
-class Simulator;
-class SensorFusion;
+using tk::spline;
 
 class Trajectory {
  public:
@@ -21,7 +19,7 @@ class Trajectory {
   void CoordinateMap2Car(double &x_point, double &y_point);
   void CoordinateCar2Map(double &x_point, double &y_point);
 
-  tk::spline &Fit();
+  void Fit();
   void GenerateTrajectory(vector<double> &next_x_vals,
                           vector<double> &next_y_vals);
 
@@ -37,8 +35,6 @@ class Trajectory {
   vector<double> previous_path_x;
   vector<double> previous_path_y;
 
-  SensorFusion &sensor_data;
-  Simulator &simulator;
 
   int lane;
 

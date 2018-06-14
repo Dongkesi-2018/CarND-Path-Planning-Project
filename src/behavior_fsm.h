@@ -3,15 +3,16 @@
 #include <map>
 #include <vector>
 #include <string>
+#include "vehicle.h"
+
 using std::string;
 using std::map;
 using std::vector;
-class Vehicle;
 
 class BehaviorFSM {
  public:
   BehaviorFSM() {
-    configure();
+    // configure();
   }
   map<string, int> lane_direction = {
       {"PLCL", 1}, {"LCL", 1}, {"LCR", -1}, {"PLCR", -1}};

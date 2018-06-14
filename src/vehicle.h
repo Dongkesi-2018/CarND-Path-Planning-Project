@@ -57,7 +57,7 @@ vector<double> Vehicle::PositionAt(const Vehicle &vehicle, double t) {
   double x = vehicle.x + vehicle.vx * t;
   double y = vehicle.y + vehicle.vy * t;
   double theta = atan2(vehicle.vy, vehicle.vx);
-  vector<double> frenet = Map::getInstance()->getFrenet(x, y, theta);
+  vector<double> frenet = Map::getInstance().getFrenet(x, y, theta);
   double s = frenet[0];
   double d = frenet[1];
   return {s, d};

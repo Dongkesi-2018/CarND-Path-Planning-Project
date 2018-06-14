@@ -3,10 +3,11 @@
 
 #include <map>
 #include <vector>
+#include "vehicle.h"
+#include "behavior_fsm.h"
+
 using std::map;
 using std::vector;
-class Vehicle;
-class BehaviorFSM;
 
 class BehaviorPlanner {
  public:

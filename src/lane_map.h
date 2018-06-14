@@ -5,10 +5,10 @@ using std::vector;
 
 class Map{
 public:
-  static Map *getInstance()
+  static Map &getInstance()
   {
     static Map instance;
-    return &instance;
+    return instance;
   }
 
   double distance(double x1, double y1, double x2, double y2);
@@ -26,8 +26,9 @@ private:
   vector<double> map_waypoints_dy;
 
 private:
-  Map() {  }
-  ~Map() {  }
-}
+  Map() = default;
+  Map(const Map &) = delete;
+  Map & operator=(const Map &) = delete;
+};
 
 #endif

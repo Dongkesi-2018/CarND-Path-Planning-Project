@@ -13,6 +13,7 @@ struct EgoVehicle {
   double car_d;
   double car_yaw;
   double car_speed;
+  EgoVehicle() {}
   EgoVehicle(double x, double y, double s, double d, double yaw, double speed)
     : car_x(x), car_y(y), car_s(s), car_d(d), car_yaw(yaw), car_speed(speed) {}
 };
@@ -25,6 +26,7 @@ struct NonEgoVehicle {
   double vy;
   double s;
   double d;
+  NonEgoVehicle() {}
   NonEgoVehicle(int id, double x, double y, double vx, double vy, double s, double d)
     : id(id), x(x), y(y), vx(vx), vy(vy), s(s), d(d) {}
 };
