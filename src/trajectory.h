@@ -8,37 +8,43 @@
 #include "lane_map.h"
 
 using std::vector;
-using tk::spline;
 
-class Trajectory {
- public:
+class Trajectory
+{
+public:
+  Trajectory():car_speed(0){}
   void UpdateLocationData(Simulator &simulator, SensorFusion &sensor);
   void UpdatePredictionData();
-  void UpdateBehaviorData(double v, int lane);
+  void UpdateBehaviorData(double v, int lane,  double dt);
 
   void CoordinateMap2Car(double &x_point, double &y_point);
   void CoordinateCar2Map(double &x_point, double &y_point);
 
+  vector<double> &get_next_x_vals() { return next_x_vals; }
+  vector<double> &get_next_y_vals() { return next_y_vals; }
   void Fit();
-  void GenerateTrajectory(vector<double> &next_x_vals,
-                          vector<double> &next_y_vals);
-
- private:
+  double SmoothSpeed(double cur_v, double goal_v,  double dt);
+  double SmoothSpeed(double cur_v, double goal_v) ;
+  void GenerateTrajectory(Simulator &simulator, SensorFusion &sensor, double goal_v, int goal_lane,  double dt);
+private:
   double ref_yaw;
   double ref_x;
   double ref_y;
   double ref_vel;
+  bool is_accl;
 
   double car_x;
   double car_y;
   double car_s;
+  double car_speed;
   vector<double> previous_path_x;
   vector<double> previous_path_y;
-
-
+  vector<double> next_x_vals;
+  vector<double> next_y_vals;
   int lane;
-
   tk::spline s;
+
+  void _GenerateTrajectory();
 };
 
 #endif

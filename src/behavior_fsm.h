@@ -1,21 +1,19 @@
 #ifndef BEHAVIOR_FSM_H_
 #define BEHAVIOR_FSM_H_
 #include <map>
-#include <vector>
 #include <string>
+#include <vector>
+#include "simulator.h"
 #include "vehicle.h"
-
-using std::string;
 using std::map;
+using std::string;
 using std::vector;
 
 class BehaviorFSM {
  public:
-  BehaviorFSM() {
-    // configure();
-  }
+  BehaviorFSM() { configure(); }
   map<string, int> lane_direction = {
-      {"PLCL", 1}, {"LCL", 1}, {"LCR", -1}, {"PLCR", -1}};
+      {"PLCL", -1}, {"LCL", -1}, {"LCR", 1}, {"PLCR", 1}};
 
   vector<Vehicle> choose_next_state(map<int, vector<Vehicle>> predictions);
   vector<string> successor_states();
@@ -35,14 +33,16 @@ class BehaviorFSM {
   bool get_vehicle_ahead(map<int, vector<Vehicle>> predictions, int lane,
                          Vehicle &rVehicle);
   vector<Vehicle> generate_predictions(int horizon = 2);
-  void refresh_ego(Vehicle &ego);
+  void refresh_ego(const Vehicle &ego, Simulator &sim, double dt);
   void realize_next_state(vector<Vehicle> trajectory);
   void configure();
   int find_goal_lane(map<int, vector<Vehicle>> predictions);
+  double cal_safe_distance(double v);
 
  public:
   Vehicle ego_;
   double dt;
+  double end_s;
   double target_speed;
   double max_acceleration;
   double goal_s;

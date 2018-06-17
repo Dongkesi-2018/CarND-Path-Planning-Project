@@ -1,9 +1,16 @@
 #ifndef LANE_MAP_H_
 #define LANE_MAP_H_
 #include <vector>
+#include <algorithm>
+#include <cmath>
+#include "helper.h"
+
+using std::min;
+using std::sqrt;
 using std::vector;
 
-class Map{
+class Map
+{
 public:
   static Map &getInstance()
   {
@@ -11,12 +18,16 @@ public:
     return instance;
   }
 
-  double distance(double x1, double y1, double x2, double y2);
+  double distance(double x1, double y1, double x2, double y2)
+  {
+    return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+  }
   int ClosestWaypoint(double x, double y);
   int NextWaypoint(double x, double y, double theta);
   vector<double> getFrenet(double x, double y, double theta);
   vector<double> getXY(double s, double d);
   void addWaypoint(double x, double y, double s, double dx, double dy);
+  void do_somthing() {}
 
 private:
   vector<double> map_waypoints_x;
@@ -28,7 +39,7 @@ private:
 private:
   Map() = default;
   Map(const Map &) = delete;
-  Map & operator=(const Map &) = delete;
+  Map &operator=(const Map &) = delete;
 };
 
 #endif
