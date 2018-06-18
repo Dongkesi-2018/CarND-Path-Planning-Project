@@ -1,7 +1,7 @@
 #include "config.h"
 
 const double ParameterConfig::safe_distance = 30.0;
-const double ParameterConfig::prediction_interval = 1;
+const double ParameterConfig::prediction_interval = 0.5;
 const double ParameterConfig::preferred_buffer = 80;
 const double ParameterConfig::target_speed = 22.2;
 const int ParameterConfig::lanes_available = 3;

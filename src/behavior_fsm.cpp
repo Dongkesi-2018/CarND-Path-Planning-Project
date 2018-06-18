@@ -155,7 +155,7 @@ vector<double> BehaviorFSM::get_kinematics(
       // should have a safe distance, if the ego was blocked by an ahead vehicle
       // suddenly
       if (vehicle_ahead.s - ego_.s > cal_safe_distance(ego_.v)) {
-        new_velocity *= 0.99;
+        new_velocity *= 0.9;
       }
     } else {
       path += "3, ";
@@ -164,7 +164,7 @@ vector<double> BehaviorFSM::get_kinematics(
            vehicle_ahead.v * dt - 0.5 * (ego_.a) * dt * dt) /
           dt;
       if (max_velocity_in_front < 0) {
-        max_velocity_in_front = vehicle_ahead.v;
+        max_velocity_in_front = vehicle_ahead.v / 2;
       }
       cout << max_velocity_in_front << ", " << max_velocity_accel_limit << ", "
            << this->target_speed << endl;

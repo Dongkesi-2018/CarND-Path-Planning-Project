@@ -117,7 +117,7 @@ struct Vehicle {
 
     // Frenet
     if ((this->state == "LCL" || this->state == "LCR")) {
-      this->change_lane_delay = 10;
+      this->change_lane_delay = 20;//(int)(4.0 / (this->vx));
       this->en = false;
     }
 

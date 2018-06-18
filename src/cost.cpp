@@ -13,6 +13,7 @@ using std::vector;
 const double REACH_GOAL = pow(10, 1);
 const double EFFICIENCY = 0.9;   // pow(10, 1);
 const double LANE_CHANGE = 0.1;  // pow(10, 1);
+const double COLLISION = 1;
 /*
 Here we have provided two possible suggestions for cost functions, but feel free
 to use your own! The weighted cost over all cost functions is computed in
@@ -103,6 +104,30 @@ double inefficiency_cost(const BehaviorFSM &fsm,
   return cost;
 }
 
+
+double collision_cost(const BehaviorFSM &fsm,
+                          const vector<Vehicle> &trajectory,
+                          const map<int, vector<Vehicle>> &predictions,
+                          map<string, double> &data) {
+  /*
+  Cost increases based on distance of intended lane (for planning a lane change)
+  and final lane of trajectory. Cost of being out of goal lane also becomes
+  larger as vehicle approaches goal distance. This function is very similar to
+  what you have already implemented in the "Implement a Cost Function in C++"
+  quiz.
+  */
+  return 0;
+  double cost = 0;
+  Vehicle vehicle_ahead;
+  if (fsm.get_vehicle_ahead(predictions, data["intended_lane"], vehicle_ahead)) {
+    double distance = abs(vehicle_ahead.s - fsm.ego_.s);
+    cost = exp(-(distance / fsm.cal_safe_distance(fsm.ego_.v)));
+  }
+  cout << "collision_cost: " << cost << endl;
+  return cost;
+}
+
+
 #if 1
 double lane_speed(const BehaviorFSM &fsm, const map<int, vector<Vehicle>> &predictions, int lane) {
   Vehicle vehicle_ahead;
@@ -145,8 +170,8 @@ double calculate_cost(const BehaviorFSM &vehicle,
   vector<function<double(const BehaviorFSM &, const vector<Vehicle> &,
                          const map<int, vector<Vehicle>> &,
                          map<string, double> &)>>
-      cf_list = {goal_distance_cost, inefficiency_cost, lane_change_cost};
-  vector<double> weight_list = {REACH_GOAL, EFFICIENCY, LANE_CHANGE};
+      cf_list = {goal_distance_cost, inefficiency_cost, lane_change_cost, collision_cost};
+  vector<double> weight_list = {REACH_GOAL, EFFICIENCY, LANE_CHANGE, COLLISION};
 
   for (int i = 0; i < cf_list.size(); i++) {
     double new_cost = weight_list[i] * cf_list[i](vehicle, trajectory,

@@ -11,7 +11,7 @@ using std::vector;
 
 class BehaviorFSM {
  public:
-  BehaviorFSM() { configure(); }
+  BehaviorFSM() { configure(); prev_size = 0;}
   map<string, int> lane_direction = {
       {"PLCL", -1}, {"LCL", -1}, {"LCR", 1}, {"PLCR", 1}};
 
@@ -38,11 +38,13 @@ class BehaviorFSM {
   void configure();
   int find_goal_lane(map<int, vector<Vehicle>> predictions);
   double cal_safe_distance(double v) const;
+  Vehicle &get_ego() {return ego_;}
 
  public:
   Vehicle ego_;
   double dt;
   double end_s;
+  int prev_size;
   double target_speed;
   double max_acceleration;
   double goal_s;
