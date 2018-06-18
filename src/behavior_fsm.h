@@ -29,9 +29,9 @@ class BehaviorFSM {
       string state, map<int, vector<Vehicle>> predictions);
   void increment(double dt);
   bool get_vehicle_behind(const map<int, vector<Vehicle>> &predictions, int lane,
-                          Vehicle &rVehicle) const;
+                          Vehicle &rVehicle, bool in_safe = true) const;
   bool get_vehicle_ahead(const map<int, vector<Vehicle>> &predictions, int lane,
-                         Vehicle &rVehicle) const;
+                         Vehicle &rVehicle, bool in_safe = true) const;
   vector<Vehicle> generate_predictions(int horizon = 2);
   void refresh_ego(const Vehicle &ego, Simulator &sim, double dt);
   void realize_next_state(vector<Vehicle> trajectory);

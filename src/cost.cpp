@@ -11,9 +11,11 @@ using std::map;
 using std::vector;
 // TODO: change weights for cost functions.
 const double REACH_GOAL = pow(10, 1);
-const double EFFICIENCY = 0.9;   // pow(10, 1);
-const double LANE_CHANGE = 0.1;  // pow(10, 1);
+const double EFFICIENCY = 0.7;     // pow(10, 1);
+const double LANE_CHANGE = 0.3;  // pow(10, 1);
 const double COLLISION = 1;
+const double LANE_KEEP = 2;
+;
 /*
 Here we have provided two possible suggestions for cost functions, but feel free
 to use your own! The weighted cost over all cost functions is computed in
@@ -68,6 +70,28 @@ double lane_change_cost(const BehaviorFSM &fsm,
   return cost;
 }
 
+double lane_keep_cost(const BehaviorFSM &fsm, const vector<Vehicle> &trajectory,
+                      const map<int, vector<Vehicle>> &predictions,
+                      map<string, double> &data) {
+  /*
+  Cost increases based on distance of intended lane (for planning a lane change)
+  and final lane of trajectory. Cost of being out of goal lane also becomes
+  larger as vehicle approaches goal distance. This function is very similar to
+  what you have already implemented in the "Implement a Cost Function in C++"
+  quiz.
+  */
+  Vehicle vehicle_ahead;
+  double cost = 0;
+  if (data["intended_lane"] != data["final_lane"] &&
+          fsm.get_vehicle_ahead(predictions, data["intended_lane"],
+                                vehicle_ahead),true) {
+      cost = exp(-1);
+  }
+
+  cout << "lane_keep_cost: " << cost << endl;
+  return cost;
+}
+
 double inefficiency_cost(const BehaviorFSM &fsm,
                          const vector<Vehicle> &trajectory,
                          const map<int, vector<Vehicle>> &predictions,
@@ -80,15 +104,15 @@ double inefficiency_cost(const BehaviorFSM &fsm,
   have already implemented in the "Implement a Second Cost Function in C++"
   quiz.
   */
-  double proposed_speed_intended = //trajectory[1].v;
+  double proposed_speed_intended =  // trajectory[1].v;
       lane_speed(fsm, predictions, data["intended_lane"]);
   // If no vehicle is in the proposed lane, we can travel at target speed.
   if (proposed_speed_intended < 0) {
     proposed_speed_intended = fsm.target_speed;
   }
 
-  double proposed_speed_final = //trajectory[0].v;
-  lane_speed(fsm, predictions, data["final_lane"]);
+  double proposed_speed_final =  // trajectory[0].v;
+      lane_speed(fsm, predictions, data["final_lane"]);
   if (proposed_speed_final < 0) {
     proposed_speed_final = fsm.target_speed;
   }
@@ -104,11 +128,9 @@ double inefficiency_cost(const BehaviorFSM &fsm,
   return cost;
 }
 
-
-double collision_cost(const BehaviorFSM &fsm,
-                          const vector<Vehicle> &trajectory,
-                          const map<int, vector<Vehicle>> &predictions,
-                          map<string, double> &data) {
+double collision_cost(const BehaviorFSM &fsm, const vector<Vehicle> &trajectory,
+                      const map<int, vector<Vehicle>> &predictions,
+                      map<string, double> &data) {
   /*
   Cost increases based on distance of intended lane (for planning a lane change)
   and final lane of trajectory. Cost of being out of goal lane also becomes
@@ -116,10 +138,10 @@ double collision_cost(const BehaviorFSM &fsm,
   what you have already implemented in the "Implement a Cost Function in C++"
   quiz.
   */
-  return 0;
   double cost = 0;
   Vehicle vehicle_ahead;
-  if (fsm.get_vehicle_ahead(predictions, data["intended_lane"], vehicle_ahead)) {
+  if (fsm.get_vehicle_ahead(predictions, data["intended_lane"], vehicle_ahead),
+      true) {
     double distance = abs(vehicle_ahead.s - fsm.ego_.s);
     cost = exp(-(distance / fsm.cal_safe_distance(fsm.ego_.v)));
   }
@@ -127,9 +149,32 @@ double collision_cost(const BehaviorFSM &fsm,
   return cost;
 }
 
+double max_distance_cost(const BehaviorFSM &fsm,
+                         const vector<Vehicle> &trajectory,
+                         const map<int, vector<Vehicle>> &predictions,
+                         map<string, double> &data) {
+  /*
+  Cost increases based on distance of intended lane (for planning a lane change)
+  and final lane of trajectory. Cost of being out of goal lane also becomes
+  larger as vehicle approaches goal distance. This function is very similar to
+  what you have already implemented in the "Implement a Cost Function in C++"
+  quiz.
+  */
+
+  double cost = 0;
+  Vehicle vehicle_ahead;
+  if (fsm.get_vehicle_ahead(predictions, data["intended_lane"], vehicle_ahead,
+                            false)) {
+    double distance = abs(vehicle_ahead.s - fsm.ego_.s);
+    cost = exp(-(distance / fsm.cal_safe_distance(fsm.ego_.v)));
+  }
+  cout << "max_distance_cost: " << cost << endl;
+  return cost;
+}
 
 #if 1
-double lane_speed(const BehaviorFSM &fsm, const map<int, vector<Vehicle>> &predictions, int lane) {
+double lane_speed(const BehaviorFSM &fsm,
+                  const map<int, vector<Vehicle>> &predictions, int lane) {
   Vehicle vehicle_ahead;
   if (fsm.get_vehicle_ahead(predictions, lane, vehicle_ahead)) {
     return vehicle_ahead.v;
@@ -170,8 +215,10 @@ double calculate_cost(const BehaviorFSM &vehicle,
   vector<function<double(const BehaviorFSM &, const vector<Vehicle> &,
                          const map<int, vector<Vehicle>> &,
                          map<string, double> &)>>
-      cf_list = {goal_distance_cost, inefficiency_cost, lane_change_cost, collision_cost};
-  vector<double> weight_list = {REACH_GOAL, EFFICIENCY, LANE_CHANGE, COLLISION};
+      cf_list = {goal_distance_cost, inefficiency_cost, lane_change_cost,
+                 collision_cost, lane_keep_cost};
+  vector<double> weight_list = {REACH_GOAL, EFFICIENCY, LANE_CHANGE, COLLISION,
+                                LANE_KEEP};
 
   for (int i = 0; i < cf_list.size(); i++) {
     double new_cost = weight_list[i] * cf_list[i](vehicle, trajectory,

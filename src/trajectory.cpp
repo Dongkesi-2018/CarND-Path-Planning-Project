@@ -22,7 +22,7 @@ void Trajectory::UpdateLocationData(Simulator &simulator,
   this->car_x = ego.car_x;
   this->car_y = ego.car_y;
   this->car_s = ego.car_s;
-//   this->car_speed = mph2mps(ego.car_speed);  // unit: m/s
+  // this->car_speed = mph2mps(ego.car_speed);  // unit: m/s
   this->previous_path_x = prev_path.x;
   this->previous_path_y = prev_path.y;
 }
@@ -30,36 +30,20 @@ void Trajectory::UpdateLocationData(Simulator &simulator,
 void Trajectory::UpdatePredictionData() {}
 
 // Input unit: m/s
-double Trajectory::SmoothSpeed(double cur_v, double goal_v, double dt) {
-  //   double ref_v = ParameterConfig::smooth_w * cur_v + (1 -
-  //   ParameterConfig::smooth_w) * goal_v; //unit: m/s
-  double ref_v = goal_v;
-  double max_acc_v = dt * 10;  // v = v+at; current speed unit is m/s, the max
-                               // accelaration is 10m/s2.
-  double gap_v = ref_v - cur_v;
-  if (gap_v > max_acc_v) {
-    ref_v = cur_v + max_acc_v;
-  }
-  if (gap_v < -max_acc_v) {
-    ref_v = cur_v - max_acc_v;
-  }
-  cout << "real ref_v: " << ref_v << endl;
-  return ref_v;  // m/s
-                 // return goal_v;
-}
-
 double Trajectory::SmoothSpeed(double cur_v, double goal_v) {
   double new_v = cur_v;
+  if (this->startup) {
+    this->accl_w = 0.02;
+  } else {
+    this->accl_w = 0.005;
+  }
+  double d_accl = ParameterConfig::max_acceleration * this->accl_w;
   if (this->is_accl) {
     if (cur_v < goal_v)
-      new_v += ParameterConfig::max_acceleration * 0.01;
-    // else
-    //   new_v = goal_v;
+      new_v += d_accl;
   } else {
     if (cur_v > goal_v * 0.5)
-      new_v -= ParameterConfig::max_acceleration * 0.01;
-    // else
-    //   new_v = goal_v;
+      new_v -= d_accl;
   }
   if (new_v > ParameterConfig::target_speed) {
       new_v = ParameterConfig::target_speed;
@@ -67,12 +51,18 @@ double Trajectory::SmoothSpeed(double cur_v, double goal_v) {
   if (new_v < 0) {
       new_v = 0.1;
   }
-  cout << "real ref_v: " << new_v << endl;
+  this->car_speed = new_v;
+  cout << "fast real ref_v: " << new_v << endl;
   return new_v;
 }
+
 // goal_v unit: m/s
 void Trajectory::UpdateBehaviorData(double goal_v, int goal_lane, double dt) {
   this->is_accl = goal_v > this->car_speed ? true : false;
+  if (this->car_speed < 0.7 * goal_v)
+    this->startup = true;
+  else 
+    this->startup = false;
   this->ref_vel = goal_v;//mps2mph(SmoothSpeed(car_speed, goal_v));
   this->lane = goal_lane;
 }
@@ -122,6 +112,12 @@ void Trajectory::Fit() {
     ref_y = previous_path_y[prev_size - 1];
     double ref_x_prev = previous_path_x[prev_size - 2];
     double ref_y_prev = previous_path_y[prev_size - 2];
+
+    // ref_x = previous_path_x[1];
+    // ref_y = previous_path_y[1];
+    // double ref_x_prev = previous_path_x[0];
+    // double ref_y_prev = previous_path_y[0];
+
     ref_yaw = atan2(ref_y - ref_y_prev, ref_x - ref_x_prev);
 
     ptsx.push_back(ref_x_prev);
@@ -146,7 +142,7 @@ void Trajectory::Fit() {
   for (int i = 0; i < ptsx.size(); i++) {
     CoordinateMap2Car(ptsx[i], ptsy[i]);
   }
-
+  
   s.set_points(ptsx, ptsy);
 }
 
@@ -165,11 +161,11 @@ void Trajectory::_GenerateTrajectory() {
   double x_add_on = 0;
 
   for (int i = 1; i <= 50 - previous_path_x.size(); i++) {
-    this->car_speed = SmoothSpeed(this->car_speed, this->ref_vel);
+    double vel = SmoothSpeed(this->car_speed, this->ref_vel);
     // double vel = mps2mph(this->car_speed);
-    // double N = target_dist / (0.02 * ref_vel);
+    // double N = target_dist / (0.02 * vel);
     // double x_point = x_add_on + target_x / N;
-    double x_point = x_add_on + (0.02 * this->car_speed);
+    double x_point = x_add_on + (0.02 * vel);
     if (x_point > target_x) {
         cout << "break!!!" << endl;
         break;

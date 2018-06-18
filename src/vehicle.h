@@ -67,6 +67,11 @@ struct Vehicle {
     double vy = sin(yaw) * speed;
     return {vx, vy};
   }
+
+  void move_to_path_end(double end_s) {
+    
+  }
+
   /* Unit:               m,        m,        m,        m,        deg,        mph,          s*/
   void update_ego(double x, double y, double s, double d, double yaw, double speed, double dt) {
     // Cartesian
@@ -117,7 +122,7 @@ struct Vehicle {
 
     // Frenet
     if ((this->state == "LCL" || this->state == "LCR")) {
-      this->change_lane_delay = 20;//(int)(4.0 / (this->vx));
+      this->change_lane_delay = 15;//(int)(4.0 / (this->vx));
       this->en = false;
     }
 

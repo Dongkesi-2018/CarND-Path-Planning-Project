@@ -12,7 +12,7 @@ using std::vector;
 class Trajectory
 {
 public:
-  Trajectory():car_speed(0){}
+  Trajectory():car_speed(0), startup(true), accl_w(0.01){}
   void UpdateLocationData(Simulator &simulator, SensorFusion &sensor);
   void UpdatePredictionData();
   void UpdateBehaviorData(double v, int lane,  double dt);
@@ -23,8 +23,9 @@ public:
   vector<double> &get_next_x_vals() { return next_x_vals; }
   vector<double> &get_next_y_vals() { return next_y_vals; }
   void Fit();
-  double SmoothSpeed(double cur_v, double goal_v,  double dt);
-  double SmoothSpeed(double cur_v, double goal_v) ;
+  double SmoothSpeedSlow(double cur_v, double goal_v);
+  double SmoothSpeedFast(double cur_v, double goal_v) ;
+  double SmoothSpeed(double cur_v, double goal_v);
   void GenerateTrajectory(Simulator &simulator, SensorFusion &sensor, double goal_v, int goal_lane,  double dt);
 private:
   double ref_yaw;
@@ -32,6 +33,8 @@ private:
   double ref_y;
   double ref_vel;
   bool is_accl;
+  bool startup;
+  double accl_w;
 
   double car_x;
   double car_y;
