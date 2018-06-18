@@ -17,7 +17,7 @@ double goal_distance_cost(const BehaviorFSM & vehicle,  const vector<Vehicle> & 
 
 double inefficiency_cost(const BehaviorFSM & vehicle, const vector<Vehicle> & trajectory, const map<int, vector<Vehicle>> & predictions, map<string, double> & data);
 
-double lane_speed(const map<int, vector<Vehicle>> & predictions, int lane);
+double lane_speed(const BehaviorFSM &fsm, const map<int, vector<Vehicle>> &predictions, int lane);
 
 map<string, double> get_helper_data(const BehaviorFSM & vehicle, const vector<Vehicle> & trajectory, const map<int, vector<Vehicle>> & predictions);
 

@@ -28,16 +28,16 @@ class BehaviorFSM {
   vector<Vehicle> prep_lane_change_trajectory(
       string state, map<int, vector<Vehicle>> predictions);
   void increment(double dt);
-  bool get_vehicle_behind(map<int, vector<Vehicle>> predictions, int lane,
-                          Vehicle &rVehicle);
-  bool get_vehicle_ahead(map<int, vector<Vehicle>> predictions, int lane,
-                         Vehicle &rVehicle);
+  bool get_vehicle_behind(const map<int, vector<Vehicle>> &predictions, int lane,
+                          Vehicle &rVehicle) const;
+  bool get_vehicle_ahead(const map<int, vector<Vehicle>> &predictions, int lane,
+                         Vehicle &rVehicle) const;
   vector<Vehicle> generate_predictions(int horizon = 2);
   void refresh_ego(const Vehicle &ego, Simulator &sim, double dt);
   void realize_next_state(vector<Vehicle> trajectory);
   void configure();
   int find_goal_lane(map<int, vector<Vehicle>> predictions);
-  double cal_safe_distance(double v);
+  double cal_safe_distance(double v) const;
 
  public:
   Vehicle ego_;

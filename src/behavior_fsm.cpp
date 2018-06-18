@@ -57,6 +57,7 @@ vector<Vehicle> BehaviorFSM::choose_next_state(
     // }
     if (trajectory.size() != 0) {
       cost = calculate_cost(*this, predictions, trajectory);
+      cout << "cost:" << cost << endl;
       costs.push_back(cost);
       final_trajectories.push_back(trajectory);
     }
@@ -84,15 +85,17 @@ vector<string> BehaviorFSM::successor_states() {
   states.push_back("KL");
   string state = ego_.state;
   if (state.compare("KL") == 0) {
-    states.push_back("PLCL");
-    states.push_back("PLCR");
+    if (ego_.lane != 0)
+      states.push_back("PLCL");
+    if (ego_.lane != lanes_available - 1)
+      states.push_back("PLCR");
   } else if (state.compare("PLCL") == 0) {
-    if (ego_.lane != lanes_available - 1) {
+    if (ego_.lane != 0) {
       states.push_back("PLCL");
       states.push_back("LCL");
     }
   } else if (state.compare("PLCR") == 0) {
-    if (ego_.lane != 0) {
+    if (ego_.lane != lanes_available - 1) {
       states.push_back("PLCR");
       states.push_back("LCR");
     }
@@ -160,6 +163,9 @@ vector<double> BehaviorFSM::get_kinematics(
           ((vehicle_ahead.s - ego_.s - cal_safe_distance(ego_.v)) +
            vehicle_ahead.v * dt - 0.5 * (ego_.a) * dt * dt) /
           dt;
+      if (max_velocity_in_front < 0) {
+        max_velocity_in_front = vehicle_ahead.v;
+      }
       cout << max_velocity_in_front << ", " << max_velocity_accel_limit << ", "
            << this->target_speed << endl;
       new_velocity = min(min(max_velocity_in_front, max_velocity_accel_limit),
@@ -235,7 +241,8 @@ vector<Vehicle> BehaviorFSM::prep_lane_change_trajectory(
       get_kinematics(predictions, ego_.lane);
   int lane = ego_.lane;
   string path = "PLC: ";
-  if (get_vehicle_behind(predictions, ego_.lane, vehicle_behind) && vehicle_behind.v > ego_.v) {
+  if (get_vehicle_behind(predictions, ego_.lane, vehicle_behind) &&
+      vehicle_behind.v > ego_.v) {
     path += "1,";
     // Keep speed of current lane so as not to collide with car behind.
     new_s = curr_lane_new_kinematics[0];
@@ -248,8 +255,7 @@ vector<Vehicle> BehaviorFSM::prep_lane_change_trajectory(
         get_kinematics(predictions, new_lane);
     // Choose kinematics with lowest velocity.
     // TODO: this should be ">"
-    if (next_lane_new_kinematics[1] < 
-    curr_lane_new_kinematics[1]) {
+    if (next_lane_new_kinematics[1] > curr_lane_new_kinematics[1]) {
       path += "3, ";
       lane = new_lane;
       best_kinematics = next_lane_new_kinematics;
@@ -284,7 +290,7 @@ vector<Vehicle> BehaviorFSM::lane_change_trajectory(
        it != predictions.end(); ++it) {
     next_lane_vehicle = it->second[0];
     // Security distance for change lane
-    if (abs(next_lane_vehicle.s - ego_.s) < cal_safe_distance(ego_.v) &&
+    if (abs(next_lane_vehicle.s - ego_.s) < 20 /*cal_safe_distance(ego_.v)*/ &&
         next_lane_vehicle.lane == new_lane) {
       // If lane change is not possible, return empty trajectory.
       trace_exit();
@@ -299,8 +305,8 @@ vector<Vehicle> BehaviorFSM::lane_change_trajectory(
   return trajectory;
 }
 
-bool BehaviorFSM::get_vehicle_behind(map<int, vector<Vehicle>> predictions,
-                                     int lane, Vehicle &rVehicle) {
+bool BehaviorFSM::get_vehicle_behind(const map<int, vector<Vehicle>>& predictions,
+                                     int lane, Vehicle &rVehicle) const{
   /*
     Returns a true if a vehicle is found behind the current vehicle, false
     otherwise. The passed reference rVehicle is updated if a vehicle is found.
@@ -309,8 +315,8 @@ bool BehaviorFSM::get_vehicle_behind(map<int, vector<Vehicle>> predictions,
   double max_s = -1;
   bool found_vehicle = false;
   Vehicle temp_vehicle;
-  for (map<int, vector<Vehicle>>::iterator it = predictions.begin();
-       it != predictions.end(); ++it) {
+  for (auto it = predictions.cbegin();
+       it != predictions.cend(); ++it) {
     temp_vehicle = it->second[0];
     if (temp_vehicle.lane == lane && temp_vehicle.s < ego_.s &&
         temp_vehicle.s > max_s) {
@@ -327,8 +333,8 @@ bool BehaviorFSM::get_vehicle_behind(map<int, vector<Vehicle>> predictions,
   return found_vehicle;
 }
 
-bool BehaviorFSM::get_vehicle_ahead(map<int, vector<Vehicle>> predictions,
-                                    int lane, Vehicle &rVehicle) {
+bool BehaviorFSM::get_vehicle_ahead(const map<int, vector<Vehicle>> &predictions,
+                                    int lane, Vehicle &rVehicle) const {
   /*
     Returns a true if a vehicle is found ahead of the current vehicle, false
     otherwise. The passed reference rVehicle is updated if a vehicle is found.
@@ -337,8 +343,8 @@ bool BehaviorFSM::get_vehicle_ahead(map<int, vector<Vehicle>> predictions,
   double min_s = this->goal_s;
   bool found_vehicle = false;
   Vehicle temp_vehicle;
-  for (map<int, vector<Vehicle>>::iterator it = predictions.begin();
-       it != predictions.end(); ++it) {
+  for (auto it = predictions.cbegin();
+       it != predictions.cend(); ++it) {
     temp_vehicle = it->second[0];
     if (temp_vehicle.lane == lane && temp_vehicle.s > ego_.s &&
         temp_vehicle.s < min_s) {
@@ -387,7 +393,8 @@ void BehaviorFSM::realize_next_state(vector<Vehicle> trajectory) {
   trace_enter();
   Vehicle next_state = trajectory[1];
   ego_.state = next_state.state;
-  // ego_.lane = next_state.lane;
+  ego_.lane = next_state.lane;
+  ego_.d = next_state.d;
   // ego_.s = next_state.s;
   // ego_.v = next_state.v;
   // ego_.a = next_state.a;
@@ -409,8 +416,9 @@ void BehaviorFSM::configure() {
   trace_exit();
 }
 
-double BehaviorFSM::cal_safe_distance(double v) {
+double BehaviorFSM::cal_safe_distance(double v) const{
   double safe_distance =
-      v / 0.278;  // 1kmph save distance is 1, 80kmph->80m. 22.2/0.278 = 80m
+      v /
+      (0.278 * 2);  // 1kmph save distance is 1, 80kmph->80m. 22.2/0.278 = 80m
   return safe_distance > 0 ? safe_distance : 0;
 }

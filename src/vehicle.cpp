@@ -31,14 +31,14 @@ vector<double> Vehicle::PositionAt(const Vehicle &vehicle, double t) {
 
 void Vehicle::print(string head) const {
   cout << "----------- " << head << " -----------" << endl;
-  // if (type == "ego") {
-  //   cout << "car.lane:  " << lane << endl;
-  //   cout << "car.s:     " << s << endl;
-  //   cout << "car.v:     " << v << endl;
-  //   cout << "car.a:     " << a << endl;
-  //   cout << "car.state: " << state << endl;
-  //   cout << "car.type:  " << type << endl;
-  // } else {
+  if (type == "ego") {
+    cout << "car.lane:  " << lane << endl;
+    cout << "car.s:     " << s << endl;
+    cout << "car.v:     " << v << endl;
+    cout << "car.a:     " << a << endl;
+    cout << "car.state: " << state << endl;
+    cout << "car.type:  " << type << endl;
+  } else {
     cout << "car.lane:  " << lane << endl;
     cout << "car.x:     " << x << endl;
     cout << "car.y:     " << y << endl;
@@ -53,5 +53,5 @@ void Vehicle::print(string head) const {
     cout << "car.a:     " << a << endl;
     cout << "car.state: " << state << endl;
     cout << "car.type:  " << type << endl;
-  // }
+  }
 }

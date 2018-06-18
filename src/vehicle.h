@@ -14,7 +14,7 @@ using std::string;
 struct Vehicle {
  public:
   Vehicle() : x(0), y(0), vx(0), vy(0), ax(0), ay(0), yaw(0), \
-              s(0), d(0), v(0), a(0),  state("CS"), type("unknown") {}
+              s(0), d(0), v(0), a(0),  state("CS"), type("unknown"), en(true) {}
 
   // Instantiate non-ego
   Vehicle(double x, double y, double vx, double vy, double s, double d, int dummmy)
@@ -23,12 +23,13 @@ struct Vehicle {
     this->yaw = atan2(vy, vx);  
     this->v = sqrt(vx * vx + vy * vy);
     this->lane = d2lane(d);
+    this->change_lane_delay = 0;
   }
 
   // Instantiate ego
   Vehicle(double x, double y, double s, double d, double yaw, double speed) \
       : x(x), y(y), ax(0), ay(0), \
-        s(s), d(d), a(0), state("CS"), type("ego") {
+        s(s), d(d), a(0), state("CS"), type("ego"),en(true) {
     this->v = mph2mps(speed);
     this->lane = d2lane(d);
     this->yaw = deg2rad(yaw);
@@ -36,6 +37,8 @@ struct Vehicle {
     auto vc = speed2v(this->yaw, this->v);
     this->vx = vc[0];
     this->vy = vc[1];
+
+    this->change_lane_delay = 0;
   }
 
   // Instantiate Next state of ego
@@ -80,13 +83,25 @@ struct Vehicle {
     this->vy = vy;
 
     // Frenet
+    if ((this->state == "LCL" || this->state == "LCR")) {
+      this->change_lane_delay = 5;
+      this->en = false;
+    }
+
+    if (!this->en && this->change_lane_delay-- == 0) {
+      this->en = true;
+    }
+
+    if (this->en) {
+      this->d = d;
+      this->lane = d2lane(this->d);
+    }
+
     this->s = s;
-    this->d = d;
     this->a = (new_speed - this->v) / dt;
     this->v = new_speed;
 
     // other
-    this->lane = d2lane(d);
     this->type = "ego";
   }
 
@@ -101,13 +116,25 @@ struct Vehicle {
     this->vy = ego.vy;
 
     // Frenet
+    if ((this->state == "LCL" || this->state == "LCR")) {
+      this->change_lane_delay = 10;
+      this->en = false;
+    }
+
+    if (!this->en && this->change_lane_delay-- == 0) {
+      this->en = true;
+    }
+
+    if (this->en) {
+      this->d = ego.d;
+      this->lane = d2lane(this->d);
+    }
+
     this->s = ego.s;
-    this->d = ego.d;
     this->a = (ego.v - this->v) / dt;
     this->v = ego.v;
 
     // other
-    this->lane = ego.lane;
     this->type = "ego";
   }
 
@@ -142,6 +169,8 @@ struct Vehicle {
   double s, d, v, a;
   string state;
   string type;
+  int change_lane_delay;
+  bool en;
 };
 
 #endif
