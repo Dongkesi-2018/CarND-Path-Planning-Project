@@ -6,7 +6,7 @@ using std::cout;
 using std::endl;
 using std::vector;
 
-vector<double> Vehicle::PositionAt(const Vehicle &vehicle, double t) {
+vector<double> Vehicle::PositionAt(const Vehicle& vehicle, double t) {
   /*
     Omit accelorator of non-ego vehicles when get following time position.
   */

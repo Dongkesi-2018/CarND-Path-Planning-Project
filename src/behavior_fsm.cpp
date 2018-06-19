@@ -14,7 +14,7 @@ using std::min;
 using std::vector;
 
 vector<Vehicle> BehaviorFSM::choose_next_state(
-    map<int, vector<Vehicle>> predictions) {
+    const map<int, vector<Vehicle>>& predictions) {
   /*
 
 
@@ -104,7 +104,7 @@ vector<string> BehaviorFSM::successor_states() {
 }
 
 vector<Vehicle> BehaviorFSM::generate_trajectory(
-    string state, map<int, vector<Vehicle>> predictions) {
+    string state, const map<int, vector<Vehicle>>& predictions) {
   /*
     Given a possible next state, generate the appropriate trajectory to realize
     the next state.
@@ -128,7 +128,7 @@ vector<Vehicle> BehaviorFSM::generate_trajectory(
 }
 
 vector<double> BehaviorFSM::get_kinematics(
-    map<int, vector<Vehicle>> predictions, int lane) {
+    const map<int, vector<Vehicle>>& predictions, int lane) {
   /*
     Gets next timestep kinematics (position, velocity, acceleration)
     for a given lane. Tries to choose the maximum velocity and acceleration,
@@ -207,7 +207,7 @@ vector<Vehicle> BehaviorFSM::constant_speed_trajectory() {
 }
 
 vector<Vehicle> BehaviorFSM::keep_lane_trajectory(
-    map<int, vector<Vehicle>> predictions) {
+    const map<int, vector<Vehicle>>& predictions) {
   /*
     Generate a keep lane trajectory.
     */
@@ -224,7 +224,7 @@ vector<Vehicle> BehaviorFSM::keep_lane_trajectory(
 }
 
 vector<Vehicle> BehaviorFSM::prep_lane_change_trajectory(
-    string state, map<int, vector<Vehicle>> predictions) {
+    string state, const map<int, vector<Vehicle>>& predictions) {
   /*
     Generate a trajectory preparing for a lane change.
     */
@@ -275,7 +275,7 @@ vector<Vehicle> BehaviorFSM::prep_lane_change_trajectory(
 }
 
 vector<Vehicle> BehaviorFSM::lane_change_trajectory(
-    string state, map<int, vector<Vehicle>> predictions) {
+    string state, const map<int, vector<Vehicle>>& predictions) {
   /*
     Generate a lane change trajectory.
     */
@@ -285,12 +285,12 @@ vector<Vehicle> BehaviorFSM::lane_change_trajectory(
   Vehicle next_lane_vehicle;
   // Check if a lane change is possible (check if another vehicle occupies that
   // spot).
-  for (map<int, vector<Vehicle>>::iterator it = predictions.begin();
-       it != predictions.end(); ++it) {
+  for (auto it = predictions.begin(); it != predictions.end(); ++it) {
     next_lane_vehicle = it->second[0];
     // Security distance for change lane
     if (abs(next_lane_vehicle.s - ego_.s) <
-            ParameterConfig::safe_distance /*cal_safe_distance(next_lane_vehicle.v)*/
+            ParameterConfig::
+                safe_distance /*cal_safe_distance(next_lane_vehicle.v)*/
         && next_lane_vehicle.lane == new_lane) {
       // If lane change is not possible, return empty trajectory.
       cout << "lane_change_trajectory: empty" << endl;
@@ -307,7 +307,7 @@ vector<Vehicle> BehaviorFSM::lane_change_trajectory(
 }
 
 bool BehaviorFSM::get_vehicle_behind(
-    const map<int, vector<Vehicle>> &predictions, int lane, Vehicle &rVehicle,
+    const map<int, vector<Vehicle>>& predictions, int lane, Vehicle& rVehicle,
     bool in_safe) const {
   /*
     Returns a true if a vehicle is found behind the current vehicle, false
@@ -336,7 +336,7 @@ bool BehaviorFSM::get_vehicle_behind(
 }
 
 bool BehaviorFSM::get_vehicle_ahead(
-    const map<int, vector<Vehicle>> &predictions, int lane, Vehicle &rVehicle,
+    const map<int, vector<Vehicle>>& predictions, int lane, Vehicle& rVehicle,
     bool in_safe) const {
   /*
     Returns a true if a vehicle is found ahead of the current vehicle, false
@@ -364,7 +364,7 @@ bool BehaviorFSM::get_vehicle_ahead(
   return found_vehicle;
 }
 
-int BehaviorFSM::find_goal_lane(map<int, vector<Vehicle>> predictions) {
+int BehaviorFSM::find_goal_lane(const map<int, vector<Vehicle>>& predictions) {
   /*
     Returns a true if a vehicle is found ahead of the current vehicle, false
     otherwise. The passed reference rVehicle is updated if a vehicle is found.
@@ -374,9 +374,9 @@ int BehaviorFSM::find_goal_lane(map<int, vector<Vehicle>> predictions) {
   return goal_lane;
 }
 
-void BehaviorFSM::refresh_ego(const Vehicle &ego, Simulator &sim, double dt) {
+void BehaviorFSM::refresh_ego(const Vehicle& ego, Simulator& sim, double dt) {
   trace_enter();
-  PrevPathData &prev = sim.get_prev_path();
+  PrevPathData& prev = sim.get_prev_path();
   this->prev_size = prev.x.size();
   this->end_s = prev.end_s;
   // this->dt = dt;

@@ -6,12 +6,14 @@
 using std::vector;
 
 class Prediction {
-public:
-  vector<Vehicle> GenerateOneVehiclePredictions(Vehicle &vehicle, int horizon);
-  map<int, vector<Vehicle> >& GeneratePredictions(map<int, Vehicle> &non_ego, int prev_size);
-  map<int, vector<Vehicle> >& GeneratePredictions(map<int, Vehicle> &non_ego) ;
+ public:
+  vector<Vehicle> GenerateOneVehiclePredictions(const Vehicle& vehicle,
+                                                int horizon);
+  map<int, vector<Vehicle> >& GeneratePredictions(
+      const map<int, Vehicle>& non_ego);
   map<int, vector<Vehicle> >& get_predictions() { return predictions_; }
-private:
+
+ private:
   map<int, vector<Vehicle> > predictions_;
 };
 #endif

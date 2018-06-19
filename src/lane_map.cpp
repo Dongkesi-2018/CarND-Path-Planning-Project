@@ -1,9 +1,9 @@
 
 #include "lane_map.h"
 
-int Map::ClosestWaypoint(double x, double y) {
-  const vector<double> &maps_x = map_waypoints_x;
-  const vector<double> &maps_y = map_waypoints_y;
+int Map::ClosestWaypoint(double x, double y) const {
+  const vector<double>& maps_x = map_waypoints_x;
+  const vector<double>& maps_y = map_waypoints_y;
 
   double closestLen = 100000;  // large number
   int closestWaypoint = 0;
@@ -21,9 +21,9 @@ int Map::ClosestWaypoint(double x, double y) {
   return closestWaypoint;
 }
 
-int Map::NextWaypoint(double x, double y, double theta) {
-  const vector<double> &maps_x = map_waypoints_x;
-  const vector<double> &maps_y = map_waypoints_y;
+int Map::NextWaypoint(double x, double y, double theta) const {
+  const vector<double>& maps_x = map_waypoints_x;
+  const vector<double>& maps_y = map_waypoints_y;
 
   int closestWaypoint = ClosestWaypoint(x, y);
 
@@ -46,9 +46,9 @@ int Map::NextWaypoint(double x, double y, double theta) {
 }
 
 // Transform from Cartesian x,y coordinates to Frenet s,d coordinates
-vector<double> Map::getFrenet(double x, double y, double theta) {
-  const vector<double> &maps_x = map_waypoints_x;
-  const vector<double> &maps_y = map_waypoints_y;
+vector<double> Map::getFrenet(double x, double y, double theta) const {
+  const vector<double>& maps_x = map_waypoints_x;
+  const vector<double>& maps_y = map_waypoints_y;
 
   int next_wp = NextWaypoint(x, y, theta);
   int prev_wp;
@@ -92,11 +92,11 @@ vector<double> Map::getFrenet(double x, double y, double theta) {
 }
 
 // Transform from Frenet s,d coordinates to Cartesian x,y
-vector<double> Map::getXY(double s, double d) {
+vector<double> Map::getXY(double s, double d) const {
   int prev_wp = -1;
-  const vector<double> &maps_x = map_waypoints_x;
-  const vector<double> &maps_y = map_waypoints_y;
-  const vector<double> &maps_s = map_waypoints_s;
+  const vector<double>& maps_x = map_waypoints_x;
+  const vector<double>& maps_y = map_waypoints_y;
+  const vector<double>& maps_s = map_waypoints_s;
 
   while (s > maps_s[prev_wp + 1] && (prev_wp < (int)(maps_s.size() - 1))) {
     prev_wp++;

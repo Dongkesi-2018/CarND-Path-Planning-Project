@@ -1,25 +1,25 @@
 #include "path_planning.h"
 #include <iostream>
 #include <string>
+#include "config.h"
 #include "json.hpp"
 #include "prediction.h"
 #include "sensor_fusion.h"
 #include "simulator.h"
 #include "trajectory.h"
 #include "vehicle.h"
-#include "config.h"
 using std::cout;
 using std::endl;
 using std::string;
 
 using nlohmann::json;
 
-void PathPlanning::Solver(json &sensor_data) {
+void PathPlanning::Solver(json& sensor_data) {
   /*
     step 1: get sensor fusion data
   */
   dt = get_dt();
-  cout << "dt:: "<< dt << endl;
+  cout << "dt:: " << dt << endl;
   sensor_.Update(sensor_data);
   sim_.Update(sensor_data);
 
@@ -34,11 +34,11 @@ void PathPlanning::Solver(json &sensor_data) {
     input: sensor fusion data;
     output: prediction trajectory
   */
-  PrevPathData &prev = sim_.get_prev_path();
+  PrevPathData& prev = sim_.get_prev_path();
   int prev_size = prev.x.size();
   double end_s = prev.end_s;
-  map<int, vector<Vehicle> > &vehicle_pred =
-      pred_.GeneratePredictions(non_ego_/*, prev_size*/);
+  map<int, vector<Vehicle> >& vehicle_pred =
+      pred_.GeneratePredictions(non_ego_ /*, prev_size*/);
   // print_vehicle(vehicle_pred);
   /*
     step 3: behavior
@@ -50,25 +50,24 @@ void PathPlanning::Solver(json &sensor_data) {
   double goal_speed = behavior_output[1];
   cout << "goal_lane: " << goal_lane;
   cout << "  goal_speed: " << goal_speed << endl;
-  // goal_lane = 1;
-  // goal_speed = 49.5;
   /*
     step4: trajectory
     input: prediction, behavior output
     output: trajectory x, y
   */
-  traj_.GenerateTrajectory(vehicle_pred, sim_, sensor_, goal_speed, goal_lane, dt);
+  traj_.GenerateTrajectory(vehicle_pred, sim_, sensor_, goal_speed, goal_lane,
+                           dt);
 }
 
-void PathPlanning::update_non_ego(NonEgoVehicle &non_ego) {
+void PathPlanning::update_non_ego(NonEgoVehicle& non_ego) {
   if (non_ego.d > 0 && non_ego.d < ParameterConfig::lanes_available * 4) {
     if (non_ego_.find(non_ego.id) == non_ego_.end()) {
       this->non_ego_.insert(std::pair<int, Vehicle>(
           non_ego.id, Vehicle(non_ego.x, non_ego.y, non_ego.vx, non_ego.vy,
                               non_ego.s, non_ego.d, 0)));
     } else {
-      non_ego_[non_ego.id].update_non_ego(non_ego.x, non_ego.y, non_ego.vx, non_ego.vy,
-                              non_ego.s, non_ego.d, dt);
+      non_ego_[non_ego.id].update_non_ego(non_ego.x, non_ego.y, non_ego.vx,
+                                          non_ego.vy, non_ego.s, non_ego.d, dt);
     }
   } else {
     auto it = non_ego_.find(non_ego.id);
@@ -78,22 +77,22 @@ void PathPlanning::update_non_ego(NonEgoVehicle &non_ego) {
   }
 }
 
-void PathPlanning::update_ego(EgoVehicle &ego) {
-  auto new_ego = Vehicle(ego.car_x, ego.car_y, ego.car_s, ego.car_d, ego.car_yaw,
-                 ego.car_speed);
+void PathPlanning::update_ego(EgoVehicle& ego) {
+  auto new_ego = Vehicle(ego.car_x, ego.car_y, ego.car_s, ego.car_d,
+                         ego.car_yaw, ego.car_speed);
   new_ego.print("new_ego::");
   behavior_.update_ego(new_ego, sim_, dt);
 }
 
 void PathPlanning::UpdateVehicles() {
-  vector<NonEgoVehicle> &non_ego = sensor_.get_non_ego();
+  vector<NonEgoVehicle>& non_ego = sensor_.get_non_ego();
   for (auto it = non_ego.begin(); it != non_ego.end(); ++it) {
     update_non_ego(*it);
   }
   update_ego(sensor_.get_ego());
 }
 
-void PathPlanning::print_vehicle(string head, Vehicle &car) {
+void PathPlanning::print_vehicle(string head, Vehicle& car) {
   cout << "----------- " << head << " -----------" << endl;
   car.print("ego:");
 }
@@ -106,7 +105,7 @@ void PathPlanning::print_vehicle() {
   }
 }
 
-void PathPlanning::print_vehicle(map<int, vector<Vehicle> > &vehicle_pred) {
+void PathPlanning::print_vehicle(map<int, vector<Vehicle> >& vehicle_pred) {
   int i = 0;
   for (auto it = vehicle_pred.begin(); it != vehicle_pred.end(); ++it) {
     cout << "=========== " << i++ << " ============" << endl;

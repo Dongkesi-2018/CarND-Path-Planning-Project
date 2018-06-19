@@ -1,37 +1,38 @@
 #ifndef TRAJECTORY_H_
 #define TRAJECTORY_H_
 
-#include <vector>
 #include <map>
-#include "vehicle.h"
+#include <vector>
 #include "lane_map.h"
 #include "sensor_fusion.h"
 #include "simulator.h"
 #include "spline.h"
+#include "vehicle.h"
 
-using std::vector;
 using std::map;
+using std::vector;
 
 class Trajectory {
  public:
   Trajectory() : car_speed(0), startup(true), accl_w(0.01) {}
-  void UpdateLocationData(Simulator &simulator, SensorFusion &sensor);
-  void UpdatePredictionData(map<int, vector<Vehicle> > &prediction);
+  void UpdateLocationData(Simulator& simulator, SensorFusion& sensor);
+  void UpdatePredictionData(const map<int, vector<Vehicle> >& prediction);
   void UpdateBehaviorData(double v, int lane, double dt);
 
-  void CoordinateMap2Car(double &x_point, double &y_point);
-  void CoordinateCar2Map(double &x_point, double &y_point);
+  void CoordinateMap2Car(double& x_point, double& y_point);
+  void CoordinateCar2Map(double& x_point, double& y_point);
 
-  vector<double> &get_next_x_vals() { return next_x_vals; }
-  vector<double> &get_next_y_vals() { return next_y_vals; }
+  vector<double>& get_next_x_vals() { return next_x_vals; }
+  vector<double>& get_next_y_vals() { return next_y_vals; }
   void Fit();
   double SmoothSpeedSlow(double cur_v, double goal_v);
   double SmoothSpeedFast(double cur_v, double goal_v);
   double SmoothSpeed(double cur_v, double goal_v);
-  void GenerateTrajectory(map<int, vector<Vehicle> > &prediction,
-                          Simulator &simulator, SensorFusion &sensor,
+  void GenerateTrajectory(const map<int, vector<Vehicle> >& prediction,
+                          Simulator& simulator, SensorFusion& sensor,
                           double goal_v, int goal_lane, double dt);
   bool EmergencyBraking();
+
  private:
   double ref_yaw;
   double ref_x;

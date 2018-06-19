@@ -1,10 +1,10 @@
 #ifndef SENSOR_FUSION_H_
 #define SENSOR_FUSION_H_
-#include "json.hpp"
 #include <vector>
+#include "json.hpp"
 
-using std::vector;
 using nlohmann::json;
+using std::vector;
 
 struct EgoVehicle {
   double car_x;
@@ -15,7 +15,12 @@ struct EgoVehicle {
   double car_speed;
   EgoVehicle() {}
   EgoVehicle(double x, double y, double s, double d, double yaw, double speed)
-    : car_x(x), car_y(y), car_s(s), car_d(d), car_yaw(yaw), car_speed(speed) {}
+      : car_x(x),
+        car_y(y),
+        car_s(s),
+        car_d(d),
+        car_yaw(yaw),
+        car_speed(speed) {}
 };
 
 struct NonEgoVehicle {
@@ -27,26 +32,29 @@ struct NonEgoVehicle {
   double s;
   double d;
   NonEgoVehicle() {}
-  NonEgoVehicle(int id, double x, double y, double vx, double vy, double s, double d)
-    : id(id), x(x), y(y), vx(vx), vy(vy), s(s), d(d) {}
+  NonEgoVehicle(int id, double x, double y, double vx, double vy, double s,
+                double d)
+      : id(id), x(x), y(y), vx(vx), vy(vy), s(s), d(d) {}
 };
 
 class SensorFusion {
-public:
-  void Update(json &sensor_data) {
-    json &data = sensor_data;
+ public:
+  void Update(json& sensor_data) {
+    json& data = sensor_data;
     // update ego
-    ego_ = EgoVehicle(data["x"], data["y"], data["s"], data["d"], data["yaw"], data["speed"]);
+    ego_ = EgoVehicle(data["x"], data["y"], data["s"], data["d"], data["yaw"],
+                      data["speed"]);
     // update non-ego
     non_ego_.clear();
     for (auto d : data["sensor_fusion"]) {
-      non_ego_.push_back(NonEgoVehicle(d[0], d[1], d[2], d[3], d[4], d[5], d[6]));
+      non_ego_.push_back(
+          NonEgoVehicle(d[0], d[1], d[2], d[3], d[4], d[5], d[6]));
     }
   }
-  EgoVehicle & get_ego() { return ego_;}
-  vector<NonEgoVehicle> & get_non_ego() {return non_ego_;}
+  EgoVehicle& get_ego() { return ego_; }
+  vector<NonEgoVehicle>& get_non_ego() { return non_ego_; }
 
-private:
+ private:
   EgoVehicle ego_;
   vector<NonEgoVehicle> non_ego_;
 };

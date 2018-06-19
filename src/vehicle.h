@@ -13,23 +13,54 @@ using std::string;
 
 struct Vehicle {
  public:
-  Vehicle() : x(0), y(0), vx(0), vy(0), ax(0), ay(0), yaw(0), \
-              s(0), d(0), v(0), a(0),  state("CS"), type("unknown"), en(true) {}
+  Vehicle()
+      : x(0),
+        y(0),
+        vx(0),
+        vy(0),
+        ax(0),
+        ay(0),
+        yaw(0),
+        s(0),
+        d(0),
+        v(0),
+        a(0),
+        state("CS"),
+        type("unknown"),
+        en(true) {}
 
   // Instantiate non-ego
-  Vehicle(double x, double y, double vx, double vy, double s, double d, int dummmy)
-          : x(x), y(y), vx(vx), vy(vy), ax(0), ay(0), \
-            s(s), d(d), a(0), state("CS"), type("non-ego") {
-    this->yaw = atan2(vy, vx);  
+  Vehicle(double x, double y, double vx, double vy, double s, double d,
+          int dummmy)
+      : x(x),
+        y(y),
+        vx(vx),
+        vy(vy),
+        ax(0),
+        ay(0),
+        s(s),
+        d(d),
+        a(0),
+        state("CS"),
+        type("non-ego") {
+    this->yaw = atan2(vy, vx);
     this->v = sqrt(vx * vx + vy * vy);
     this->lane = d2lane(d);
     this->change_lane_delay = 0;
   }
 
   // Instantiate ego
-  Vehicle(double x, double y, double s, double d, double yaw, double speed) \
-      : x(x), y(y), ax(0), ay(0), \
-        s(s), d(d), a(0), state("CS"), type("ego"),en(true) {
+  Vehicle(double x, double y, double s, double d, double yaw, double speed)
+      : x(x),
+        y(y),
+        ax(0),
+        ay(0),
+        s(s),
+        d(d),
+        a(0),
+        state("CS"),
+        type("ego"),
+        en(true) {
     this->v = mph2mps(speed);
     this->lane = d2lane(d);
     this->yaw = deg2rad(yaw);
@@ -49,18 +80,15 @@ struct Vehicle {
     this->v = v;
     this->a = a;
 
-    
     this->state = state;
     this->type = "ego";
   }
 
-  static vector<double> PositionAt(const Vehicle &vehicle, double t);
+  static vector<double> PositionAt(const Vehicle& vehicle, double t);
 
   void print(string head) const;
 
-  int d2lane(double d) {
-    return (int)(d / 4.0);
-  }
+  int d2lane(double d) { return (int)(d / 4.0); }
 
   vector<double> speed2v(double yaw, double speed) {
     double vx = cos(yaw) * speed;
@@ -68,15 +96,14 @@ struct Vehicle {
     return {vx, vy};
   }
 
-  void move_to_path_end(double end_s) {
-    
-  }
+  void move_to_path_end(double end_s) {}
 
-  /* Unit:               m,        m,        m,        m,        deg,        mph,          s*/
-  void update_ego(double x, double y, double s, double d, double yaw, double speed, double dt) {
+  /* Unit:               m,        m,        m,        m,        deg, mph, s*/
+  void update_ego(double x, double y, double s, double d, double yaw,
+                  double speed, double dt) {
     // Cartesian
     this->x = x;
-    this->y = y; 
+    this->y = y;
     this->yaw = deg2rad(yaw);
     double new_speed = mph2mps(speed);
     auto vc = speed2v(this->yaw, new_speed);
@@ -110,10 +137,10 @@ struct Vehicle {
     this->type = "ego";
   }
 
-  void update_ego(const Vehicle &ego, double dt) {
-        // Cartesian
+  void update_ego(const Vehicle& ego, double dt) {
+    // Cartesian
     this->x = ego.x;
-    this->y = ego.y; 
+    this->y = ego.y;
     this->yaw = ego.yaw;
     this->ax = (ego.vx - this->vx) / dt;
     this->ay = (ego.vy - this->vy) / dt;
@@ -122,7 +149,7 @@ struct Vehicle {
 
     // Frenet
     if ((this->state == "LCL" || this->state == "LCR")) {
-      this->change_lane_delay = 30;//(int)(4.0 / (this->vx));
+      this->change_lane_delay = 30;  //(int)(4.0 / (this->vx));
       this->en = false;
     }
 
@@ -143,11 +170,13 @@ struct Vehicle {
     this->type = "ego";
   }
 
-  /* Unit:                   m,        m,       m/s,       m/s,       m,         m,         s*/
-  void update_non_ego(double x, double y, double vx, double vy, double s, double d, double dt) {
+  /* Unit:                   m,        m,       m/s,       m/s,       m, m,
+   * s*/
+  void update_non_ego(double x, double y, double vx, double vy, double s,
+                      double d, double dt) {
     // Cartesian
     this->x = x;
-    this->y = y; 
+    this->y = y;
     this->yaw = atan2(vy, vx);
     this->ax = (vx - this->vx) / dt;
     this->ay = (vy - this->vy) / dt;
@@ -159,10 +188,10 @@ struct Vehicle {
     this->d = d;
     double new_v = sqrt(vx * vx + vy * vy);
     this->a = (new_v - this->v) / dt;
-    this->v = new_v;  
+    this->v = new_v;
 
     // other
-    this->lane = d2lane(d);  
+    this->lane = d2lane(d);
     this->type = "non-ego";
   }
 
