@@ -21,7 +21,7 @@ void Trajectory::UpdateLocationData(Simulator &simulator,
   this->ref_yaw = deg2rad(ego.car_yaw);
   this->car_x = ego.car_x;
   this->car_y = ego.car_y;
-  this->car_s = ego.car_s;
+  this->car_s = prev_path.x.size() > 2 ? prev_path.end_s : ego.car_s;
   // this->car_speed = mph2mps(ego.car_speed);  // unit: m/s
   this->previous_path_x = prev_path.x;
   this->previous_path_y = prev_path.y;
@@ -35,7 +35,7 @@ double Trajectory::SmoothSpeed(double cur_v, double goal_v) {
   if (this->startup) {
     this->accl_w = 0.02;
   } else {
-    this->accl_w = 0.005;
+    this->accl_w = 0.01;
   }
   double d_accl = ParameterConfig::max_acceleration * this->accl_w;
   if (this->is_accl) {
@@ -163,9 +163,9 @@ void Trajectory::_GenerateTrajectory() {
   for (int i = 1; i <= 50 - previous_path_x.size(); i++) {
     double vel = SmoothSpeed(this->car_speed, this->ref_vel);
     // double vel = mps2mph(this->car_speed);
-    // double N = target_dist / (0.02 * vel);
-    // double x_point = x_add_on + target_x / N;
-    double x_point = x_add_on + (0.02 * vel);
+    double N = target_dist / (0.02 * vel);
+    double x_point = x_add_on + target_x / N;
+    // double x_point = x_add_on + (0.02 * vel);
     if (x_point > target_x) {
         cout << "break!!!" << endl;
         break;
