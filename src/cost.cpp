@@ -4,6 +4,7 @@
 #include <iterator>
 #include <map>
 #include "behavior_fsm.h"
+#include "config.h"
 #include "vehicle.h"
 
 using std::function;
@@ -11,11 +12,11 @@ using std::map;
 using std::vector;
 // TODO: change weights for cost functions.
 const double REACH_GOAL = pow(10, 1);
-const double EFFICIENCY = 0.7;     // pow(10, 1);
-const double LANE_CHANGE = 0.3;  // pow(10, 1);
-const double COLLISION = 1;
-const double LANE_KEEP = 2;
-;
+const double EFFICIENCY = 0.9;   // pow(10, 1);
+const double LANE_CHANGE = 0.0;  // pow(10, 1);
+const double COLLISION = 2;
+const double LANE_KEEP = 1;
+const double TRAFFIC = 3;
 /*
 Here we have provided two possible suggestions for cost functions, but feel free
 to use your own! The weighted cost over all cost functions is computed in
@@ -82,10 +83,10 @@ double lane_keep_cost(const BehaviorFSM &fsm, const vector<Vehicle> &trajectory,
   */
   Vehicle vehicle_ahead;
   double cost = 0;
-  if (data["intended_lane"] != data["final_lane"] &&
+  if (data["intended_lane"] != fsm.ego_.lane &&
           fsm.get_vehicle_ahead(predictions, data["intended_lane"],
-                                vehicle_ahead),true) {
-      cost = exp(-1);
+                                vehicle_ahead, true)) {
+    cost = exp(-1);
   }
 
   cout << "lane_keep_cost: " << cost << endl;
@@ -140,35 +141,39 @@ double collision_cost(const BehaviorFSM &fsm, const vector<Vehicle> &trajectory,
   */
   double cost = 0;
   Vehicle vehicle_ahead;
-  if (fsm.get_vehicle_ahead(predictions, data["intended_lane"], vehicle_ahead),
-      true) {
+  if (fsm.get_vehicle_ahead(predictions, data["intended_lane"], vehicle_ahead, false)) {
     double distance = abs(vehicle_ahead.s - fsm.ego_.s);
-    cost = exp(-(distance / fsm.cal_safe_distance(fsm.ego_.v)));
+    cost += exp(-(distance / fsm.cal_safe_distance(fsm.ego_.v)));
+  }
+  Vehicle vehicle_behind;
+  if (fsm.get_vehicle_behind(predictions, data["intended_lane"], vehicle_behind, true)) {
+    double distance = abs(vehicle_behind.s - fsm.ego_.s);
+    if (distance < ParameterConfig::safe_distance / 2)
+      cost += exp(-(distance / fsm.cal_safe_distance(fsm.ego_.v)));
   }
   cout << "collision_cost: " << cost << endl;
   return cost;
 }
 
-double max_distance_cost(const BehaviorFSM &fsm,
-                         const vector<Vehicle> &trajectory,
-                         const map<int, vector<Vehicle>> &predictions,
-                         map<string, double> &data) {
+
+double traffic_cost(const BehaviorFSM &fsm, const vector<Vehicle> &trajectory,
+                    const map<int, vector<Vehicle>> &predictions,
+                    map<string, double> &data) {
   /*
-  Cost increases based on distance of intended lane (for planning a lane change)
-  and final lane of trajectory. Cost of being out of goal lane also becomes
-  larger as vehicle approaches goal distance. This function is very similar to
-  what you have already implemented in the "Implement a Cost Function in C++"
-  quiz.
+  blocked by side by side cars, keep lane is a good choice.
   */
 
   double cost = 0;
+  int block = 0;
   Vehicle vehicle_ahead;
-  if (fsm.get_vehicle_ahead(predictions, data["intended_lane"], vehicle_ahead,
-                            false)) {
-    double distance = abs(vehicle_ahead.s - fsm.ego_.s);
-    cost = exp(-(distance / fsm.cal_safe_distance(fsm.ego_.v)));
+  for (int i = 0; i < ParameterConfig::lanes_available; i++) {
+    if (fsm.get_vehicle_ahead(predictions, i, vehicle_ahead, true)) {
+      block++;
+    }
   }
-  cout << "max_distance_cost: " << cost << endl;
+  if (block == ParameterConfig::lanes_available && data["intended_lane"] == fsm.ego_.lane)
+    cost = -1;
+  cout << "traffic_cost: " << cost << endl;
   return cost;
 }
 
@@ -215,9 +220,9 @@ double calculate_cost(const BehaviorFSM &vehicle,
   vector<function<double(const BehaviorFSM &, const vector<Vehicle> &,
                          const map<int, vector<Vehicle>> &,
                          map<string, double> &)>>
-      cf_list = {goal_distance_cost, inefficiency_cost, lane_change_cost,
+      cf_list = {traffic_cost, inefficiency_cost, lane_change_cost,
                  collision_cost, lane_keep_cost};
-  vector<double> weight_list = {REACH_GOAL, EFFICIENCY, LANE_CHANGE, COLLISION,
+  vector<double> weight_list = {TRAFFIC, EFFICIENCY, LANE_CHANGE, COLLISION,
                                 LANE_KEEP};
 
   for (int i = 0; i < cf_list.size(); i++) {

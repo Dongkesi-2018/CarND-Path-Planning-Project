@@ -57,7 +57,7 @@ void PathPlanning::Solver(json &sensor_data) {
     input: prediction, behavior output
     output: trajectory x, y
   */
-  traj_.GenerateTrajectory(sim_, sensor_, goal_speed, goal_lane, dt);
+  traj_.GenerateTrajectory(vehicle_pred, sim_, sensor_, goal_speed, goal_lane, dt);
 }
 
 void PathPlanning::update_non_ego(NonEgoVehicle &non_ego) {

@@ -11,7 +11,7 @@ using std::vector;
 
 class BehaviorFSM {
  public:
-  BehaviorFSM() { configure(); prev_size = 0;}
+  BehaviorFSM() { configure(); prev_size = 0; }
   map<string, int> lane_direction = {
       {"PLCL", -1}, {"LCL", -1}, {"LCR", 1}, {"PLCR", 1}};
 

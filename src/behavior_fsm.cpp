@@ -85,10 +85,8 @@ vector<string> BehaviorFSM::successor_states() {
   states.push_back("KL");
   string state = ego_.state;
   if (state.compare("KL") == 0) {
-    if (ego_.lane != 0)
-      states.push_back("PLCL");
-    if (ego_.lane != lanes_available - 1)
-      states.push_back("PLCR");
+    if (ego_.lane != 0) states.push_back("PLCL");
+    if (ego_.lane != lanes_available - 1) states.push_back("PLCR");
   } else if (state.compare("PLCL") == 0) {
     if (ego_.lane != 0) {
       states.push_back("PLCL");
@@ -154,7 +152,7 @@ vector<double> BehaviorFSM::get_kinematics(
                                        // regardless of preferred buffer
       // should have a safe distance, if the ego was blocked by an ahead vehicle
       // suddenly
-      if (vehicle_ahead.s - ego_.s > cal_safe_distance(ego_.v)) {
+      if (vehicle_ahead.s - ego_.s < cal_safe_distance(ego_.v)) {
         new_velocity *= 0.9;
       }
     } else {
@@ -291,8 +289,9 @@ vector<Vehicle> BehaviorFSM::lane_change_trajectory(
        it != predictions.end(); ++it) {
     next_lane_vehicle = it->second[0];
     // Security distance for change lane
-    if (abs(next_lane_vehicle.s - ego_.s) < 15/*cal_safe_distance(next_lane_vehicle.v)*/ &&
-        next_lane_vehicle.lane == new_lane) {
+    if (abs(next_lane_vehicle.s - ego_.s) <
+            ParameterConfig::safe_distance /*cal_safe_distance(next_lane_vehicle.v)*/
+        && next_lane_vehicle.lane == new_lane) {
       // If lane change is not possible, return empty trajectory.
       cout << "lane_change_trajectory: empty" << endl;
       trace_exit();
@@ -307,8 +306,9 @@ vector<Vehicle> BehaviorFSM::lane_change_trajectory(
   return trajectory;
 }
 
-bool BehaviorFSM::get_vehicle_behind(const map<int, vector<Vehicle>>& predictions,
-                                     int lane, Vehicle &rVehicle, bool in_safe) const{
+bool BehaviorFSM::get_vehicle_behind(
+    const map<int, vector<Vehicle>> &predictions, int lane, Vehicle &rVehicle,
+    bool in_safe) const {
   /*
     Returns a true if a vehicle is found behind the current vehicle, false
     otherwise. The passed reference rVehicle is updated if a vehicle is found.
@@ -317,8 +317,7 @@ bool BehaviorFSM::get_vehicle_behind(const map<int, vector<Vehicle>>& prediction
   double max_s = -1;
   bool found_vehicle = false;
   Vehicle temp_vehicle;
-  for (auto it = predictions.cbegin();
-       it != predictions.cend(); ++it) {
+  for (auto it = predictions.cbegin(); it != predictions.cend(); ++it) {
     temp_vehicle = it->second[0];
     if (temp_vehicle.lane == lane && temp_vehicle.s < ego_.s &&
         temp_vehicle.s > max_s) {
@@ -327,7 +326,8 @@ bool BehaviorFSM::get_vehicle_behind(const map<int, vector<Vehicle>>& prediction
       found_vehicle = true;
     }
   }
-  if (in_safe && found_vehicle && ((ego_.s - max_s) > cal_safe_distance(ego_.v))) {
+  if (in_safe && found_vehicle &&
+      ((ego_.s - max_s) > cal_safe_distance(ego_.v))) {
     cout << "B: found_vehicle = false" << endl;
     found_vehicle = false;
   }
@@ -335,8 +335,9 @@ bool BehaviorFSM::get_vehicle_behind(const map<int, vector<Vehicle>>& prediction
   return found_vehicle;
 }
 
-bool BehaviorFSM::get_vehicle_ahead(const map<int, vector<Vehicle>> &predictions,
-                                    int lane, Vehicle &rVehicle, bool in_safe) const {
+bool BehaviorFSM::get_vehicle_ahead(
+    const map<int, vector<Vehicle>> &predictions, int lane, Vehicle &rVehicle,
+    bool in_safe) const {
   /*
     Returns a true if a vehicle is found ahead of the current vehicle, false
     otherwise. The passed reference rVehicle is updated if a vehicle is found.
@@ -345,8 +346,7 @@ bool BehaviorFSM::get_vehicle_ahead(const map<int, vector<Vehicle>> &predictions
   double min_s = this->goal_s;
   bool found_vehicle = false;
   Vehicle temp_vehicle;
-  for (auto it = predictions.cbegin();
-       it != predictions.cend(); ++it) {
+  for (auto it = predictions.cbegin(); it != predictions.cend(); ++it) {
     temp_vehicle = it->second[0];
     if (temp_vehicle.lane == lane && temp_vehicle.s > ego_.s &&
         temp_vehicle.s < min_s) {
@@ -355,7 +355,8 @@ bool BehaviorFSM::get_vehicle_ahead(const map<int, vector<Vehicle>> &predictions
       found_vehicle = true;
     }
   }
-  if (in_safe && found_vehicle && ((min_s - ego_.s) > cal_safe_distance(ego_.v))) {
+  if (in_safe && found_vehicle &&
+      ((min_s - ego_.s) > cal_safe_distance(ego_.v))) {
     cout << "A: found_vehicle = false: " << min_s - ego_.s << endl;
     found_vehicle = false;
   }
@@ -418,9 +419,12 @@ void BehaviorFSM::configure() {
   trace_exit();
 }
 
-double BehaviorFSM::cal_safe_distance(double v) const{
+double BehaviorFSM::cal_safe_distance(double v) const {
   double safe_distance =
-      v / (0.278 * 2);  // 1kmph save distance is 1, 80kmph->80m. 22.2/0.278 = 80m
+      v /
+      (0.278 * 1.8);  // 1kmph save distance is 1, 80kmph->80m. 22.2/0.278 = 80m
 
-  return safe_distance < 20 ? 20: safe_distance;
+  return safe_distance < ParameterConfig::safe_distance
+             ? ParameterConfig::safe_distance
+             : safe_distance;
 }

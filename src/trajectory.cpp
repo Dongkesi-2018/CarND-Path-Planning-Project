@@ -1,5 +1,6 @@
 #include "trajectory.h"
 #include <algorithm>
+#include <map>
 #include <vector>
 #include "config.h"
 #include "helper.h"
@@ -7,7 +8,9 @@
 #include "sensor_fusion.h"
 #include "simulator.h"
 #include "spline.h"
+#include "vehicle.h"
 
+using std::map;
 using std::vector;
 
 void Trajectory::UpdateLocationData(Simulator &simulator,
@@ -21,13 +24,17 @@ void Trajectory::UpdateLocationData(Simulator &simulator,
   this->ref_yaw = deg2rad(ego.car_yaw);
   this->car_x = ego.car_x;
   this->car_y = ego.car_y;
-  this->car_s = prev_path.x.size() > 2 ? prev_path.end_s : ego.car_s;
+  this->car_lane = (int)(ego.car_d / 4);
+  this->car_s = ego.car_s;
+  this->end_path_s = prev_path.x.size() > 2 ? prev_path.end_s : ego.car_s;
   // this->car_speed = mph2mps(ego.car_speed);  // unit: m/s
   this->previous_path_x = prev_path.x;
   this->previous_path_y = prev_path.y;
 }
 
-void Trajectory::UpdatePredictionData() {}
+void Trajectory::UpdatePredictionData(map<int, vector<Vehicle>> &prediction) {
+  this->predictions = prediction;
+}
 
 // Input unit: m/s
 double Trajectory::SmoothSpeed(double cur_v, double goal_v) {
@@ -37,19 +44,26 @@ double Trajectory::SmoothSpeed(double cur_v, double goal_v) {
   } else {
     this->accl_w = 0.01;
   }
+  int diff_lane = abs(this->lane - this->car_lane);
+  if (diff_lane == 1) {
+    this->accl_w = 0.005;
+  } else if (diff_lane == 2) {
+    cout << "diff_lane == 2" << endl;
+    this->accl_w = 0.001;
+  } else {
+
+  }
   double d_accl = ParameterConfig::max_acceleration * this->accl_w;
   if (this->is_accl) {
-    if (cur_v < goal_v)
-      new_v += d_accl;
+    if (cur_v < goal_v) new_v += d_accl;
   } else {
-    if (cur_v > goal_v * 0.5)
-      new_v -= d_accl;
+    if (cur_v > goal_v * 0.5) new_v -= d_accl;
   }
   if (new_v > ParameterConfig::target_speed) {
-      new_v = ParameterConfig::target_speed;
+    new_v = ParameterConfig::target_speed;
   }
   if (new_v < 0) {
-      new_v = 0.1;
+    new_v = 0.1;
   }
   this->car_speed = new_v;
   cout << "fast real ref_v: " << new_v << endl;
@@ -61,16 +75,18 @@ void Trajectory::UpdateBehaviorData(double goal_v, int goal_lane, double dt) {
   this->is_accl = goal_v > this->car_speed ? true : false;
   if (this->car_speed < 0.7 * goal_v)
     this->startup = true;
-  else 
+  else
     this->startup = false;
-  this->ref_vel = goal_v;//mps2mph(SmoothSpeed(car_speed, goal_v));
+  this->ref_vel = goal_v;  // mps2mph(SmoothSpeed(car_speed, goal_v));
   this->lane = goal_lane;
 }
 
-void Trajectory::GenerateTrajectory(Simulator &simulator, SensorFusion &sensor,
+void Trajectory::GenerateTrajectory(map<int, vector<Vehicle>> &prediction,
+                                    Simulator &simulator, SensorFusion &sensor,
                                     double goal_v, int goal_lane, double dt) {
   UpdateLocationData(simulator, sensor);
   UpdateBehaviorData(goal_v, goal_lane, dt);
+  UpdatePredictionData(prediction);
   _GenerateTrajectory();
 }
 
@@ -93,11 +109,31 @@ void Trajectory::CoordinateCar2Map(double &x_point, double &y_point) {
   y_point += ref_y;
 }
 
+bool Trajectory::EmergencyBraking() {
+  double min_s = ParameterConfig::goal_s;
+  bool found_vehicle = false;
+  Vehicle temp_vehicle;
+  for (auto it = predictions.cbegin();
+       it != predictions.cend(); ++it) {
+    temp_vehicle = it->second[0];
+    if (temp_vehicle.lane == this->car_lane && temp_vehicle.s > this->car_s &&
+        temp_vehicle.s < min_s) {
+      min_s = temp_vehicle.s;
+    }
+  }
+  if (min_s - this->car_s < ParameterConfig::safe_distance) {
+    this->ref_vel = temp_vehicle.v;
+    this->startup = true;
+    return true;
+  }
+  return false;
+}
+
 void Trajectory::Fit() {
   vector<double> ptsx;
   vector<double> ptsy;
   auto prev_size = previous_path_x.size();
-//   prev_size = 0;
+  //   prev_size = 0;
   if (prev_size < 2) {
     double prev_car_x = car_x - cos(ref_yaw);
     double prev_car_y = car_y - sin(ref_yaw);
@@ -127,9 +163,9 @@ void Trajectory::Fit() {
     ptsy.push_back(ref_y);
   }
   Map &lm = Map::getInstance();
-  vector<double> next_wp0 = lm.getXY(car_s + 30, (2 + 4 * lane));
-  vector<double> next_wp1 = lm.getXY(car_s + 60, (2 + 4 * lane));
-  vector<double> next_wp2 = lm.getXY(car_s + 90, (2 + 4 * lane));
+  vector<double> next_wp0 = lm.getXY(end_path_s + 30, (2 + 4 * lane));
+  vector<double> next_wp1 = lm.getXY(end_path_s + 60, (2 + 4 * lane));
+  vector<double> next_wp2 = lm.getXY(end_path_s + 90, (2 + 4 * lane));
 
   ptsx.push_back(next_wp0[0]);
   ptsx.push_back(next_wp1[0]);
@@ -142,11 +178,19 @@ void Trajectory::Fit() {
   for (int i = 0; i < ptsx.size(); i++) {
     CoordinateMap2Car(ptsx[i], ptsy[i]);
   }
-  
+
   s.set_points(ptsx, ptsy);
 }
 
 void Trajectory::_GenerateTrajectory() {
+  if (EmergencyBraking()) {
+    cout << "EmergencyBraking" << endl;
+    size_t pop_size = previous_path_x.size() - 3;
+    for (size_t i = 0; i < pop_size; i++) {
+      this->previous_path_x.pop_back();
+      this->previous_path_y.pop_back();
+    }
+  }
   Fit();
   next_x_vals.clear();
   next_y_vals.clear();
@@ -167,8 +211,8 @@ void Trajectory::_GenerateTrajectory() {
     double x_point = x_add_on + target_x / N;
     // double x_point = x_add_on + (0.02 * vel);
     if (x_point > target_x) {
-        cout << "break!!!" << endl;
-        break;
+      cout << "break!!!" << endl;
+      break;
     }
     double y_point = s(x_point);
 
@@ -179,7 +223,8 @@ void Trajectory::_GenerateTrajectory() {
     next_x_vals.push_back(x_point);
     next_y_vals.push_back(y_point);
   }
-//   for(size_t i = 0; i != next_x_vals.size(); i++) {
-//       cout << "next_x: " << next_x_vals[i] << " next_y: " << next_y_vals[i] << endl;
-//   }
+  //   for(size_t i = 0; i != next_x_vals.size(); i++) {
+  //       cout << "next_x: " << next_x_vals[i] << " next_y: " << next_y_vals[i]
+  //       << endl;
+  //   }
 }
