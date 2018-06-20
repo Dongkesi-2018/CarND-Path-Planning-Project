@@ -129,7 +129,9 @@ bool Trajectory::EmergencyBraking() {
       cout << "EmergencyBraking: in the end of lap" << endl;
       return false;
     }
-    this->ref_vel = temp_vehicle.v;
+    this->ref_vel = this->car_speed * 0.5;
+    this->accl_w  = 0.001;
+    this->is_accl = false;
     return true;
   }
 
