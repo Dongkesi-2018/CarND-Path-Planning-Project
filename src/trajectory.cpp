@@ -120,10 +120,20 @@ bool Trajectory::EmergencyBraking() {
     }
   }
   if (min_s - this->car_s < ParameterConfig::safe_distance) {
+    // this->ref_vel = temp_vehicle.v;
+    // this->startup = true;
+    if (this->car_s > ParameterConfig::goal_s - 50) {
+      this->ref_vel = this->car_speed * 0.9;
+      this->accl_w  = 0.001;
+      this->is_accl = false;
+      cout << "EmergencyBraking: in the end of lap" << endl;
+      return false;
+    }
     this->ref_vel = temp_vehicle.v;
-    this->startup = true;
     return true;
   }
+
+
   return false;
 }
 
