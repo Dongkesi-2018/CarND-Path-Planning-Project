@@ -13,8 +13,8 @@ class BehaviorPlanner {
  public:
   vector<double> Solver(const map<int, vector<Vehicle>>& predictions);
 
-  void update_ego(const Vehicle& ego, Simulator& sim, double dt) {
-    fsm_.refresh_ego(ego, sim, dt);
+  void update_ego(const Vehicle& ego, double dt) {
+    fsm_.refresh_ego(ego, dt);
   }
 
  private:

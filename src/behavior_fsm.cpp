@@ -15,33 +15,6 @@ using std::vector;
 
 vector<Vehicle> BehaviorFSM::choose_next_state(
     const map<int, vector<Vehicle>>& predictions) {
-  /*
-
-
-    ***Here you can implement the transition_function code from the Behavior
-    Planning Pseudocode classroom concept.***
-
-
-    INPUT: A predictions map. This is a map using vehicle id as keys with
-    predicted vehicle trajectories as values. A trajectory is a vector of
-    Vehicle objects. The first item in the trajectory represents the vehicle at
-    the current timestep. The second item in the trajectory represents the
-    vehicle one timestep in the future. OUTPUT: The the best (lowest cost)
-    trajectory for the ego vehicle corresponding to the next ego vehicle state.
-
-    Functions that will be useful:
-    1. successor_states() - Uses the current state to return a vector of
-    possible successor states for the finite state machine.
-    2. generate_trajectory(string state, map<int, vector<Vehicle>> predictions)
-    - Returns a vector of Vehicle objects representing a vehicle trajectory,
-    given a state and predictions. Note that trajectory vectors might have size
-    0 if no possible trajectory exists for the state.
-    3. calculate_cost(Vehicle vehicle, map<int, vector<Vehicle>> predictions,
-    vector<Vehicle> trajectory) - Included from cost.cpp, computes the cost for
-    a trajectory.
-    */
-
-  // TODO: Your solution here.
   trace_enter();
   vector<string> states = successor_states();
   double cost;
@@ -52,9 +25,6 @@ vector<Vehicle> BehaviorFSM::choose_next_state(
   cout << "new prediction" << endl;
   for (auto it = states.begin(); it != states.end(); it++) {
     vector<Vehicle> trajectory = generate_trajectory(*it, predictions);
-    // for (auto it = trajectory.begin(); it != trajectory.end(); ++it) {
-    //   it->print("traj:");
-    // }
     if (trajectory.size() != 0) {
       cost = calculate_cost(*this, predictions, trajectory);
       cout << *it << " cost:" << cost << endl;
@@ -70,7 +40,7 @@ vector<Vehicle> BehaviorFSM::choose_next_state(
     it->print("best one:");
   }
   trace_exit();
-  // TODO: Change return value here:
+
   return final_trajectories[best_idx];
 }
 
@@ -364,23 +334,8 @@ bool BehaviorFSM::get_vehicle_ahead(
   return found_vehicle;
 }
 
-int BehaviorFSM::find_goal_lane(const map<int, vector<Vehicle>>& predictions) {
-  /*
-    Returns a true if a vehicle is found ahead of the current vehicle, false
-    otherwise. The passed reference rVehicle is updated if a vehicle is found.
-    */
-  Vehicle temp_vehicle;
-
-  return goal_lane;
-}
-
-void BehaviorFSM::refresh_ego(const Vehicle& ego, Simulator& sim, double dt) {
+void BehaviorFSM::refresh_ego(const Vehicle& ego, double dt) {
   trace_enter();
-  PrevPathData& prev = sim.get_prev_path();
-  this->prev_size = prev.x.size();
-  this->end_s = prev.end_s;
-  // this->dt = dt;
-  // ego.print("new ego:");
   // ego_.print("refresh_before:");
   ego_.update_ego(ego, dt);
   // ego_.print("refresh_after:");

@@ -70,7 +70,7 @@ double Trajectory::SmoothSpeed(double cur_v, double goal_v) {
 }
 
 // goal_v unit: m/s
-void Trajectory::UpdateBehaviorData(double goal_v, int goal_lane, double dt) {
+void Trajectory::UpdateBehaviorData(double goal_v, int goal_lane) {
   this->is_accl = goal_v > this->car_speed ? true : false;
   if (this->car_speed < 0.7 * goal_v)
     this->startup = true;
@@ -82,9 +82,9 @@ void Trajectory::UpdateBehaviorData(double goal_v, int goal_lane, double dt) {
 
 void Trajectory::GenerateTrajectory(const map<int, vector<Vehicle>>& prediction,
                                     Simulator& simulator, SensorFusion& sensor,
-                                    double goal_v, int goal_lane, double dt) {
+                                    double goal_v, int goal_lane) {
   UpdateLocationData(simulator, sensor);
-  UpdateBehaviorData(goal_v, goal_lane, dt);
+  UpdateBehaviorData(goal_v, goal_lane);
   UpdatePredictionData(prediction);
   _GenerateTrajectory();
 }

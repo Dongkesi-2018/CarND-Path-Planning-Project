@@ -29,22 +29,22 @@ void PathPlanning::Solver(json& sensor_data) {
   this->UpdateVehicles();
   // print_vehicle(string("Ego:"), ego_);
   // print_vehicle();
+
   /*
     step 3: prediction
     input: sensor fusion data;
     output: prediction trajectory
   */
-  PrevPathData& prev = sim_.get_prev_path();
-  int prev_size = prev.x.size();
-  double end_s = prev.end_s;
   map<int, vector<Vehicle> >& vehicle_pred =
-      pred_.GeneratePredictions(non_ego_ /*, prev_size*/);
+      pred_.GeneratePredictions(non_ego_);
   // print_vehicle(vehicle_pred);
+
   /*
     step 3: behavior
     input: prediction, sensor fusion
     output: goal_lane, ref_vel
   */
+
   vector<double> behavior_output = behavior_.Solver(vehicle_pred);
   int goal_lane = (int)(behavior_output[0]);
   double goal_speed = behavior_output[1];
@@ -55,8 +55,7 @@ void PathPlanning::Solver(json& sensor_data) {
     input: prediction, behavior output
     output: trajectory x, y
   */
-  traj_.GenerateTrajectory(vehicle_pred, sim_, sensor_, goal_speed, goal_lane,
-                           dt);
+  traj_.GenerateTrajectory(vehicle_pred, sim_, sensor_, goal_speed, goal_lane);
 }
 
 void PathPlanning::update_non_ego(NonEgoVehicle& non_ego) {
@@ -81,7 +80,7 @@ void PathPlanning::update_ego(EgoVehicle& ego) {
   auto new_ego = Vehicle(ego.car_x, ego.car_y, ego.car_s, ego.car_d,
                          ego.car_yaw, ego.car_speed);
   new_ego.print("new_ego::");
-  behavior_.update_ego(new_ego, sim_, dt);
+  behavior_.update_ego(new_ego, dt);
 }
 
 void PathPlanning::UpdateVehicles() {
