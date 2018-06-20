@@ -18,10 +18,10 @@ const double COLLISION = 2;
 const double LANE_KEEP = 1;
 const double TRAFFIC = 3;
 
-static double goal_distance_cost(const BehaviorFSM& fsm,
-                                 const vector<Vehicle>& trajectory,
-                                 const map<int, vector<Vehicle>>& predictions,
-                                 map<string, double>& data) {
+static double goal_distance_cost(const BehaviorFSM &fsm,
+                                 const vector<Vehicle> &trajectory,
+                                 const map<int, vector<Vehicle>> &predictions,
+                                 map<string, double> &data) {
   /*
   Cost increases based on distance of intended lane (for planning a lane change)
   and final lane of trajectory. Cost of being out of goal lane also becomes
@@ -43,10 +43,10 @@ static double goal_distance_cost(const BehaviorFSM& fsm,
   return cost;
 }
 
-static double lane_change_cost(const BehaviorFSM& fsm,
-                               const vector<Vehicle>& trajectory,
-                               const map<int, vector<Vehicle>>& predictions,
-                               map<string, double>& data) {
+static double lane_change_cost(const BehaviorFSM &fsm,
+                               const vector<Vehicle> &trajectory,
+                               const map<int, vector<Vehicle>> &predictions,
+                               map<string, double> &data) {
   /*
   Cost increases based on distance of intended lane (for planning a lane change)
   and final lane of trajectory. Cost of being out of goal lane also becomes
@@ -64,10 +64,10 @@ static double lane_change_cost(const BehaviorFSM& fsm,
   return cost;
 }
 
-static double lane_keep_cost(const BehaviorFSM& fsm,
-                             const vector<Vehicle>& trajectory,
-                             const map<int, vector<Vehicle>>& predictions,
-                             map<string, double>& data) {
+static double lane_keep_cost(const BehaviorFSM &fsm,
+                             const vector<Vehicle> &trajectory,
+                             const map<int, vector<Vehicle>> &predictions,
+                             map<string, double> &data) {
   /*
   most of time keep lane is a good idea.
   */
@@ -83,8 +83,8 @@ static double lane_keep_cost(const BehaviorFSM& fsm,
   return cost;
 }
 
-static double lane_speed(const BehaviorFSM& fsm,
-                         const map<int, vector<Vehicle>>& predictions,
+static double lane_speed(const BehaviorFSM &fsm,
+                         const map<int, vector<Vehicle>> &predictions,
                          int lane) {
   Vehicle vehicle_ahead;
   if (fsm.get_vehicle_ahead(predictions, lane, vehicle_ahead)) {
@@ -93,10 +93,10 @@ static double lane_speed(const BehaviorFSM& fsm,
   return -1.0;
 }
 
-static double inefficiency_cost(const BehaviorFSM& fsm,
-                                const vector<Vehicle>& trajectory,
-                                const map<int, vector<Vehicle>>& predictions,
-                                map<string, double>& data) {
+static double inefficiency_cost(const BehaviorFSM &fsm,
+                                const vector<Vehicle> &trajectory,
+                                const map<int, vector<Vehicle>> &predictions,
+                                map<string, double> &data) {
   /*
   Cost becomes higher for trajectories with intended lane and final lane that
   have traffic slower than vehicle's target speed. You can use the
@@ -129,10 +129,10 @@ static double inefficiency_cost(const BehaviorFSM& fsm,
   return cost;
 }
 
-static double collision_cost(const BehaviorFSM& fsm,
-                             const vector<Vehicle>& trajectory,
-                             const map<int, vector<Vehicle>>& predictions,
-                             map<string, double>& data) {
+static double collision_cost(const BehaviorFSM &fsm,
+                             const vector<Vehicle> &trajectory,
+                             const map<int, vector<Vehicle>> &predictions,
+                             map<string, double> &data) {
   /*
   the distance between ego with ahead and behind vehicles, The cost decreases
   with distance.
@@ -155,10 +155,10 @@ static double collision_cost(const BehaviorFSM& fsm,
   return cost;
 }
 
-static double traffic_cost(const BehaviorFSM& fsm,
-                           const vector<Vehicle>& trajectory,
-                           const map<int, vector<Vehicle>>& predictions,
-                           map<string, double>& data) {
+static double traffic_cost(const BehaviorFSM &fsm,
+                           const vector<Vehicle> &trajectory,
+                           const map<int, vector<Vehicle>> &predictions,
+                           map<string, double> &data) {
   /*
   blocked by side by side cars, keep lane is a good choice.
   */
@@ -178,8 +178,8 @@ static double traffic_cost(const BehaviorFSM& fsm,
 }
 
 static map<string, double> get_helper_data(
-    const BehaviorFSM& fsm, const vector<Vehicle>& trajectory,
-    const map<int, vector<Vehicle>>& predictions) {
+    const BehaviorFSM &fsm, const vector<Vehicle> &trajectory,
+    const map<int, vector<Vehicle>> &predictions) {
   /*
   Generate helper data to use in cost functions:
   indended_lane: +/- 1 from the current lane if the ehicle is planning or
@@ -210,9 +210,9 @@ static map<string, double> get_helper_data(
   return trajectory_data;
 }
 
-double calculate_cost(const BehaviorFSM& vehicle,
-                      const map<int, vector<Vehicle>>& predictions,
-                      const vector<Vehicle>& trajectory) {
+double calculate_cost(const BehaviorFSM &vehicle,
+                      const map<int, vector<Vehicle>> &predictions,
+                      const vector<Vehicle> &trajectory) {
   /*
   Sum weighted cost functions to get total cost for trajectory.
   */
@@ -221,9 +221,9 @@ double calculate_cost(const BehaviorFSM& vehicle,
   double cost = 0.0;
 
   // Add additional cost functions here.
-  vector<
-      function<double(const BehaviorFSM&, const vector<Vehicle>&,
-                      const map<int, vector<Vehicle>>&, map<string, double>&)>>
+  vector<function<double(const BehaviorFSM &, const vector<Vehicle> &,
+                         const map<int, vector<Vehicle>> &,
+                         map<string, double> &)>>
       cf_list = {traffic_cost, inefficiency_cost, lane_change_cost,
                  collision_cost, lane_keep_cost};
   vector<double> weight_list = {TRAFFIC, EFFICIENCY, LANE_CHANGE, COLLISION,
